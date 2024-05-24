@@ -1,0 +1,113 @@
+package apperror
+
+import (
+	"assignment-go-rest-api/constant"
+	"fmt"
+	"net/http"
+	"strconv"
+)
+
+func (c *CustomError) Error() string {
+	return fmt.Sprintf("Error %d: %s", c.Code, c.Message)
+}
+
+func ErrInternalServer() error {
+	return NewCustomError(http.StatusInternalServerError, constant.ResponseMsgErrorInternalServer)
+}
+
+func ErrBadRequest() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgErrorInvalidRequest)
+}
+
+func ErrUserNotFound() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgErrorUserNotFound)
+}
+
+func ErrEmailRequired() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgEmailRequired)
+}
+
+func ErrPasswordRequired() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgPasswordRequired)
+}
+
+func ErrUnauthorized() error {
+	return NewCustomError(http.StatusUnauthorized, constant.ResponseMsgErrorUnauthorized)
+}
+
+func ErrForbidden() error {
+	return NewCustomError(http.StatusForbidden, constant.ResponseMsgErrorForbidden)
+}
+
+func ErrEmailAlreadyRegistered() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgEmailAlreadyRegistered)
+}
+
+func ErrPasswordShouldEightChar() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgPasswordShouldEightChar)
+}
+
+func ErrIncorrectCredentials() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgIncorrectCredentials)
+}
+
+func ErrWalletAlreadyCreated() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgWalletAlreadyCreated)
+}
+
+func ErrWalletNotFound() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgWalletNotFound)
+}
+
+func ErrWalletRecipientNotFound() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgRecipienWalletNotFound)
+}
+
+func ErrSourceFundNotFound() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgSourceFundNotFound)
+}
+
+func ErrInsufficientBalance() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgInsufficientBalance)
+
+}
+
+func ErrTopUpFailed() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgTopUpFailed)
+}
+
+func ErrTransferFailed() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgTransferFailed)
+}
+
+func ErrCantTransferToOwnWallet() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgCantTransferToOwnWallet)
+}
+
+func ErrResetTokenNotFound() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgResetTokenNotFound)
+}
+
+func ErrPasswordNotMatch() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgPasswordNotMatch)
+}
+
+func ErrMiniumTopUp() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgTopUpFailed+"! minimum top up should be more than "+strconv.Itoa(constant.MinTopUp))
+}
+
+func ErrMaximumTopUp() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgTopUpFailed+"! maximum top up should be less than "+strconv.Itoa(constant.MaxTopUp))
+}
+
+func ErrMiniumTransfer() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgTransferFailed+"! minimum transfer should be more than "+strconv.Itoa(constant.MinTransfer))
+}
+
+func ErrMaximumTransfer() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgTransferFailed+"! maximum transfer should be less than "+strconv.Itoa(constant.MaxTransfer))
+}
+
+func ErrTransactionNotFound() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgTransactionNotFound)
+}
