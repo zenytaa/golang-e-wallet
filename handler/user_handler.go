@@ -13,14 +13,12 @@ import (
 )
 
 type UserHandlerImpl struct {
-	walletUsecase      usecase.WalletUsecase
-	transactionUsecase usecase.TransactionUsecase
+	walletUsecase usecase.WalletUsecase
 }
 
-func NewUserHandler(walletUsecase usecase.WalletUsecase, transactionUsecase usecase.TransactionUsecase) *UserHandlerImpl {
+func NewUserHandler(walletUsecase usecase.WalletUsecase) *UserHandlerImpl {
 	return &UserHandlerImpl{
-		walletUsecase:      walletUsecase,
-		transactionUsecase: transactionUsecase,
+		walletUsecase: walletUsecase,
 	}
 }
 
@@ -50,25 +48,7 @@ func (h *UserHandlerImpl) GetProfile(ctx *gin.Context) {
 	query.SortBy = strings.ToLower(query.SortBy)
 	query.Sort = strings.ToUpper(query.Sort)
 
-	transactionResponses, err := h.transactionUsecase.ListTransaction(ctx, user.Id, query)
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
-
-	income, err := h.transactionUsecase.Income(ctx, user.Id)
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
-
-	expense, err := h.transactionUsecase.Expense(ctx, user.Id)
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
-
-	userDetailResponse := dto.ToUserDetailResponse(*user, *wallet, transactionResponses, *income, *expense)
+	userDetailResponse := dto.ToUserDetailResponse(*user, *wallet)
 
 	ctx.JSON(http.StatusOK, dto.WebResponse{
 		Code:    http.StatusOK,

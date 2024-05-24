@@ -10,29 +10,27 @@ import (
 	"database/sql"
 )
 
+type UserUsecaseOpts struct {
+	Db               *sql.DB
+	UserRepository   repository.UserRepository
+	WalletRepository repository.WalletRepository
+}
+
 type UserUsecase interface {
 	GetUser(ctx context.Context, request *dto.UserRequestParam) (*entity.User, error)
-	// CreateUser(ctx context.Context, request *dto.UserRequest) (*entity.User, error)
 }
 
 type UserUsecaseImpl struct {
-	db                    *sql.DB
-	userRepository        repository.UserRepository
-	walletRepository      repository.WalletRepository
-	transactionRepository repository.TransactionRepository
+	db               *sql.DB
+	userRepository   repository.UserRepository
+	walletRepository repository.WalletRepository
 }
 
-func NewUserUsecase(
-	db *sql.DB,
-	userRepository repository.UserRepository,
-	walletRepository repository.WalletRepository,
-	transactionRepository repository.TransactionRepository,
-) UserUsecase {
+func NewUserUsecase(userUOpts *UserUsecaseOpts) UserUsecase {
 	return &UserUsecaseImpl{
-		db:                    db,
-		userRepository:        userRepository,
-		walletRepository:      walletRepository,
-		transactionRepository: transactionRepository,
+		db:               userUOpts.Db,
+		userRepository:   userUOpts.UserRepository,
+		walletRepository: userUOpts.WalletRepository,
 	}
 }
 

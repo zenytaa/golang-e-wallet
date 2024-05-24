@@ -12,6 +12,12 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+type WalletUsecaseOpts struct {
+	Db               *sql.DB
+	UserRepository   repository.UserRepository
+	WalletRepository repository.WalletRepository
+}
+
 type WalletUsecase interface {
 	CreateWallet(ctx context.Context, request *dto.WalletRequest) (*entity.Wallet, error)
 	GetWalletByUserId(ctx context.Context, request *dto.WalletRequest) (*entity.Wallet, error)
@@ -23,11 +29,11 @@ type WalletUsecaseImpl struct {
 	walletRepository repository.WalletRepository
 }
 
-func NewWalletUsecase(db *sql.DB, userRepository repository.UserRepository, walletRepository repository.WalletRepository) WalletUsecase {
+func NewWalletUsecase(walletUOpts *WalletUsecaseOpts) WalletUsecase {
 	return &WalletUsecaseImpl{
-		db:               db,
-		userRepository:   userRepository,
-		walletRepository: walletRepository,
+		db:               walletUOpts.Db,
+		userRepository:   walletUOpts.UserRepository,
+		walletRepository: walletUOpts.WalletRepository,
 	}
 }
 

@@ -17,6 +17,13 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+type AuthUsecaseOpts struct {
+	Db                      *sql.DB
+	UserRepository          repository.UserRepository
+	WalletRepository        repository.WalletRepository
+	PasswordResetRepository repository.PasswordResetRepository
+}
+
 type AuthUsecase interface {
 	Register(ctx context.Context, request dto.AuthRegisterRequest) (*dto.AuthRegisterResponse, error)
 	Login(ctx context.Context, request dto.AuthLoginRequest) (*string, error)
@@ -31,12 +38,12 @@ type AuthUsecaseImpl struct {
 	passwordResetRepository repository.PasswordResetRepository
 }
 
-func NewAuthUsecase(db *sql.DB, userRepository repository.UserRepository, walletRepository repository.WalletRepository, passwordResetRepository repository.PasswordResetRepository) AuthUsecase {
+func NewAuthUsecase(authuOpts *AuthUsecaseOpts) AuthUsecase {
 	return &AuthUsecaseImpl{
-		db:                      db,
-		userRepository:          userRepository,
-		walletRepository:        walletRepository,
-		passwordResetRepository: passwordResetRepository,
+		db:                      authuOpts.Db,
+		userRepository:          authuOpts.UserRepository,
+		walletRepository:        authuOpts.WalletRepository,
+		passwordResetRepository: authuOpts.PasswordResetRepository,
 	}
 }
 
