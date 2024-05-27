@@ -1,8 +1,8 @@
 package repository
 
 import (
+	"assignment-go-rest-api/apperror"
 	"assignment-go-rest-api/entity"
-	"assignment-go-rest-api/utils"
 	"context"
 	"database/sql"
 )
@@ -22,20 +22,27 @@ func NewSourceFundRepository(db *sql.DB) SourceFundRepository {
 }
 
 func (r *SourceFundRepositoryImpl) GetById(ctx context.Context, sourceId uint) (*entity.SourceOfFund, error) {
+	sourceFund := entity.SourceOfFund{}
+
+	var err error
+
 	SQL := `
 	SELECT id, fund_name FROM source_of_funds WHERE id = $1
 	;`
 
-	rows, err := r.db.QueryContext(ctx, SQL, sourceId)
-	utils.IfErrorLogPrint(err)
-	defer rows.Close()
-
-	sourceFund := &entity.SourceOfFund{}
-	if rows.Next() {
-		err := rows.Scan(&sourceFund.Id, &sourceFund.FundName)
-		utils.IfErrorLogPrint(err)
-		return sourceFund, nil
+	tx := extractTx(ctx)
+	if tx != nil {
+		err = tx.QueryRowContext(ctx, SQL, sourceId).Scan(&sourceFund.Id, &sourceFund.FundName)
+	} else {
+		err = r.db.QueryRowContext(ctx, SQL, sourceId).Scan(&sourceFund.Id, &sourceFund.FundName)
 	}
 
-	return sourceFund, err
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, apperror.ErrSourceFundNotFound()
+		}
+		return nil, err
+	}
+
+	return &sourceFund, err
 }

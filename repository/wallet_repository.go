@@ -22,7 +22,6 @@ func NewWalletRepository() WalletRepository {
 	return &WalletRepositoryImpl{}
 }
 
-// GetByWalletId implements WalletRepository.
 func (r *WalletRepositoryImpl) GetByWalletId(ctx context.Context, tx *sql.Tx, walletId uint) (*entity.Wallet, error) {
 	SQL := `
 	SELECT id, user_id, wallet_number, balance, created_at, updated_at, deleted_at
@@ -113,5 +112,4 @@ func (r *WalletRepositoryImpl) GetByWalletNumber(ctx context.Context, tx *sql.Tx
 	}
 
 	return &wallet, err
-
 }

@@ -20,11 +20,11 @@ type TransactionRepository interface {
 }
 
 type TransactionRepositoryImpl struct {
-	db *sql.DB
+	Db *sql.DB
 }
 
 func NewTransactionRepository(trOpts *TransactionRepoOpts) TransactionRepository {
-	return &TransactionRepositoryImpl{db: trOpts.Db}
+	return &TransactionRepositoryImpl{Db: trOpts.Db}
 }
 
 func (r *TransactionRepositoryImpl) CreateOne(ctx context.Context, tc entity.Transaction) (uint, error) {
@@ -40,7 +40,7 @@ func (r *TransactionRepositoryImpl) CreateOne(ctx context.Context, tc entity.Tra
 	if tx != nil {
 		err = tx.QueryRowContext(ctx, SQL, tc).Scan(&tc.Id)
 	} else {
-		err = r.db.QueryRowContext(ctx, SQL, tc).Scan(&tc.Id)
+		err = r.Db.QueryRowContext(ctx, SQL, tc).Scan(&tc.Id)
 	}
 
 	if err != nil {
