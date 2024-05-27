@@ -52,15 +52,14 @@ type ResetPasswordResponse struct {
 }
 
 type ListTransactionResponse struct {
-	Id                uint            `json:"id"`
-	SenderWalletId    uint            `json:"sender_wallet_id"`
-	RecipientWalletId uint            `json:"recipient_wallet_id"`
-	RecipientUsername string          `json:"recipient_username"`
-	Amount            decimal.Decimal `json:"amount"`
-	SourceFundId      uint            `json:"source_of_fund_id"`
-	Description       string          `json:"description"`
-	CreatedAt         time.Time       `json:"created_at"`
-	UpdatedAt         time.Time       `json:"updated_at"`
+	Id              uint            `json:"id"`
+	SenderWallet    WalletResponse  `json:"sender_wallet"`
+	RecipientWallet WalletResponse  `json:"recipient_wallet"`
+	Amount          decimal.Decimal `json:"amount"`
+	SourceFundId    uint            `json:"source_of_fund_id"`
+	Description     string          `json:"description"`
+	CreatedAt       time.Time       `json:"created_at"`
+	UpdatedAt       time.Time       `json:"updated_at"`
 }
 
 func ToAuthRegisterResponse(user entity.User, wallet entity.Wallet) *AuthRegisterResponse {

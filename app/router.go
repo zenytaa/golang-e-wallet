@@ -35,7 +35,7 @@ func NewRouter(routerOpt *RouterOpt) *gin.Engine {
 	router.POST("/forgot-password", routerOpt.AuthHandler.ForgotPassword)
 	router.POST("/reset-password", routerOpt.AuthHandler.ResetPassword)
 
-	protected := router.Group("/api")
+	protected := router.Group("/user")
 	{
 		protected.Use(middleware.JwtAuthMiddleware(routerOpt.UserUsecase))
 		protected.GET("/profile", routerOpt.UserHandler.GetProfile)

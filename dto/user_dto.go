@@ -22,6 +22,15 @@ type UserDetailResponse struct {
 	Expense      decimal.Decimal           `json:"expense"`
 }
 
+type UserResponse struct {
+	UserId   uint   `json:"user_id"`
+	Username string `json:"username"`
+}
+
+func ToUserResponse(user entity.User) *UserResponse {
+	return &UserResponse{UserId: user.Id, Username: user.Username}
+}
+
 func ToUserDetailResponse(user entity.User, wallet entity.Wallet) *UserDetailResponse {
 	return &UserDetailResponse{
 		UserId:       user.Id,

@@ -15,13 +15,13 @@ type TopUpCreateRequest struct {
 }
 
 type TopUpResponse struct {
-	Id                uint            `json:"id" binding:"required"`
-	SenderWalletId    uint            `json:"sender_wallet_id" binding:"required"`
-	RecipientWalletId uint            `json:"recipient_wallet_id" binding:"required"`
-	Amount            decimal.Decimal `json:"amount" binding:"required"`
-	SourceOfFundId    uint            `json:"source_of_fund_id" binding:"required"`
-	Description       string          `json:"description" binding:"required,len=35"`
-	CreatedAt         time.Time       `json:"created_at" binding:"required"`
+	Id              uint            `json:"id" binding:"required"`
+	SenderWallet    WalletResponse  `json:"sender_wallet" binding:"required"`
+	RecipientWallet WalletResponse  `json:"recipient_wallet" binding:"required"`
+	Amount          decimal.Decimal `json:"amount" binding:"required"`
+	SourceOfFundId  uint            `json:"source_of_fund_id" binding:"required"`
+	Description     string          `json:"description" binding:"required,len=35"`
+	CreatedAt       time.Time       `json:"created_at" binding:"required"`
 }
 
 type TransferCreateRequest struct {
@@ -33,15 +33,14 @@ type TransferCreateRequest struct {
 }
 
 type TransferResponse struct {
-	Id                uint            `json:"id" binding:"required"`
-	SenderWalletId    uint            `json:"sender_wallet_id" binding:"required"`
-	RecipientWalletId uint            `json:"recipient_wallet_id" binding:"required"`
-	RecipientUsername string          `json:"recipient_username" binding:"required"`
-	Amount            decimal.Decimal `json:"amount" binding:"required,gte=50000,lte=10000000"`
-	SourceFundId      uint            `json:"source_of_fund_id" binding:"required"`
-	Description       string          `json:"description" binding:"len=35"`
-	CreatedAt         time.Time       `json:"created_at" binding:"required"`
-	UpdatedAt         time.Time       `json:"updated_at" binding:"required"`
+	Id              uint            `json:"id" binding:"required"`
+	SenderWallet    WalletResponse  `json:"sender_wallet" binding:"required"`
+	RecipientWallet WalletResponse  `json:"recipient_wallet" binding:"required"`
+	Amount          decimal.Decimal `json:"amount" binding:"required,gte=50000,lte=10000000"`
+	SourceFundId    uint            `json:"source_of_fund_id" binding:"required"`
+	Description     string          `json:"description" binding:"len=35"`
+	CreatedAt       time.Time       `json:"created_at" binding:"required"`
+	UpdatedAt       time.Time       `json:"updated_at" binding:"required"`
 }
 
 type ListTransactionQuery struct {
@@ -57,41 +56,39 @@ type ListTransactionQuery struct {
 
 func ToTopUpResponse(ts entity.Transaction) *TopUpResponse {
 	return &TopUpResponse{
-		Id:                ts.Id,
-		SenderWalletId:    ts.SenderWalletId,
-		RecipientWalletId: ts.RecipientWalletId,
-		Amount:            ts.Amount,
-		SourceOfFundId:    ts.SourceOfFundId,
-		Description:       ts.Description,
-		CreatedAt:         ts.CreatedAt,
+		Id:              ts.Id,
+		SenderWallet:    *ToWalletResponse(ts.SenderWallet),
+		RecipientWallet: *ToWalletResponse(ts.RecipientWallet),
+		Amount:          ts.Amount,
+		SourceOfFundId:  ts.SourceOfFundId,
+		Description:     ts.Description,
+		CreatedAt:       ts.CreatedAt,
 	}
 }
 
-func ToTransferResponse(ts entity.Transaction, user entity.User) *TransferResponse {
+func ToTransferResponse(ts entity.Transaction) *TransferResponse {
 	return &TransferResponse{
-		Id:                ts.Id,
-		SenderWalletId:    ts.SenderWalletId,
-		RecipientWalletId: ts.RecipientWalletId,
-		RecipientUsername: user.Username,
-		Amount:            ts.Amount,
-		SourceFundId:      ts.SourceOfFundId,
-		Description:       ts.Description,
-		CreatedAt:         ts.CreatedAt,
-		UpdatedAt:         ts.UpdatedAt,
+		Id:              ts.Id,
+		SenderWallet:    *ToWalletResponse(ts.SenderWallet),
+		RecipientWallet: *ToWalletResponse(ts.RecipientWallet),
+		Amount:          ts.Amount,
+		SourceFundId:    ts.SourceOfFundId,
+		Description:     ts.Description,
+		CreatedAt:       ts.CreatedAt,
+		UpdatedAt:       ts.UpdatedAt,
 	}
 }
 
 func ToListTransactionResponse(ts entity.Transaction) *ListTransactionResponse {
 	return &ListTransactionResponse{
-		Id:                ts.Id,
-		SenderWalletId:    ts.SenderWalletId,
-		RecipientWalletId: ts.RecipientWalletId,
-		RecipientUsername: ts.RecipientUsername,
-		Amount:            ts.Amount,
-		SourceFundId:      ts.SourceOfFundId,
-		Description:       ts.Description,
-		CreatedAt:         ts.CreatedAt,
-		UpdatedAt:         ts.UpdatedAt,
+		Id:              ts.Id,
+		SenderWallet:    *ToWalletResponse(ts.SenderWallet),
+		RecipientWallet: *ToWalletResponse(ts.RecipientWallet),
+		Amount:          ts.Amount,
+		SourceFundId:    ts.SourceOfFundId,
+		Description:     ts.Description,
+		CreatedAt:       ts.CreatedAt,
+		UpdatedAt:       ts.UpdatedAt,
 	}
 }
 

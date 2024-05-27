@@ -66,7 +66,7 @@ func (u *AuthUsecaseImpl) Register(ctx context.Context, request dto.AuthRegister
 	}
 
 	createWallet := entity.Wallet{
-		UserId:       newUser.Id,
+		User:         *newUser,
 		WalletNumber: utils.GenerateWalletNumber(newUser.Id),
 		Balance:      decimal.New(0, 0),
 	}

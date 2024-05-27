@@ -50,7 +50,7 @@ func (u *WalletUsecaseImpl) CreateWallet(ctx context.Context, request *dto.Walle
 		return nil, apperror.ErrWalletAlreadyCreated()
 	}
 
-	wallet.UserId = user.Id
+	wallet.User = *user
 	wallet.Balance = decimal.New(0, 0)
 	wallet.WalletNumber = utils.GenerateWalletNumber(user.Id)
 
