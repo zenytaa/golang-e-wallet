@@ -10,31 +10,33 @@ import (
 )
 
 func createRouter(db *sql.DB) *gin.Engine {
-	userRepository := repository.NewUserRepository()
-	walletRepository := repository.NewWalletRepository()
+	userRepository := repository.NewUserRepository(&repository.UserRepoOpts{Db: db})
+	walletRepository := repository.NewWalletRepository(&repository.WalletRepoOpts{Db: db})
 	passwordResetRepository := repository.NewPasswordResetRepository(db)
-	sourceFundRepository := repository.NewSourceFundRepository(db)
-	transactionRepository := repository.NewTransactionRepository()
+	// sourceFundRepository := repository.NewSourceFundRepository(db)
 
-	authUsecase := usecase.NewAuthUsecase(db, userRepository, walletRepository, passwordResetRepository)
-	userUsecase := usecase.NewUserUsecase(db, userRepository, walletRepository, transactionRepository)
-	walletUsecase := usecase.NewWalletUsecase(db, userRepository, walletRepository)
-	transactionUsecase := usecase.NewTransactionUsecase(db, transactionRepository, walletRepository, sourceFundRepository, userRepository)
-
-	authHandler := handler.NewAuthHandler(authUsecase)
-	userHandler := handler.NewUserHandler(walletUsecase, transactionUsecase)
-	transactionHandler := handler.NewTransactionHandler(&handler.TransactionHandlerConfig{
-		TransactionUsecase: transactionUsecase,
-		UserUsecase:        userUsecase,
-		AuthUsecase:        authUsecase,
-		WalletUsecase:      walletUsecase,
+	authUsecase := usecase.NewAuthUsecase(&usecase.AuthUsecaseOpts{
+		UserRepository:          userRepository,
+		WalletRepository:        walletRepository,
+		PasswordResetRepository: passwordResetRepository,
+		Transactor:              repository.NewTransactor(db),
+	})
+	userUsecase := usecase.NewUserUsecase(&usecase.UserUsecaseOpts{
+		UserRepository:   userRepository,
+		WalletRepository: walletRepository,
+	})
+	walletUsecase := usecase.NewWalletUsecase(&usecase.WalletUsecaseOpts{
+		UserRepository:   userRepository,
+		WalletRepository: walletRepository,
 	})
 
+	authHandler := handler.NewAuthHandler(authUsecase)
+	userHandler := handler.NewUserHandler(walletUsecase)
+
 	return NewRouter(&RouterOpt{
-		AuthHandler:        authHandler,
-		TransactionHandler: transactionHandler,
-		UserHandler:        userHandler,
-		UserUsecase:        userUsecase,
+		AuthHandler: authHandler,
+		UserHandler: userHandler,
+		UserUsecase: userUsecase,
 	})
 }
 

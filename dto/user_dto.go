@@ -20,10 +20,9 @@ type UserDetailResponse struct {
 	Transactions []ListTransactionResponse `json:"transactions"`
 	Income       decimal.Decimal           `json:"income"`
 	Expense      decimal.Decimal           `json:"expense"`
-	// TransactionLists []ListTransactionResponse `json:"transaction_list"`
 }
 
-func ToUserDetailResponse(user entity.User, wallet entity.Wallet, transactions []ListTransactionResponse, income decimal.Decimal, expense decimal.Decimal) *UserDetailResponse {
+func ToUserDetailResponse(user entity.User, wallet entity.Wallet) *UserDetailResponse {
 	return &UserDetailResponse{
 		UserId:       user.Id,
 		Email:        user.Email,
@@ -31,8 +30,5 @@ func ToUserDetailResponse(user entity.User, wallet entity.Wallet, transactions [
 		WalletId:     wallet.Id,
 		WalletNumber: wallet.WalletNumber,
 		Balance:      wallet.Balance,
-		Transactions: transactions,
-		Income:       income,
-		Expense:      expense,
 	}
 }

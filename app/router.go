@@ -11,10 +11,9 @@ import (
 )
 
 type RouterOpt struct {
-	AuthHandler        *handler.AuthHandlerImpl
-	TransactionHandler *handler.TransactionHandlerImpl
-	UserHandler        *handler.UserHandlerImpl
-	UserUsecase        usecase.UserUsecase
+	AuthHandler *handler.AuthHandlerImpl
+	UserHandler *handler.UserHandlerImpl
+	UserUsecase usecase.UserUsecase
 }
 
 func NewRouter(routerOpt *RouterOpt) *gin.Engine {
@@ -39,9 +38,6 @@ func NewRouter(routerOpt *RouterOpt) *gin.Engine {
 	protected := router.Group("/api")
 	{
 		protected.Use(middleware.JwtAuthMiddleware(routerOpt.UserUsecase))
-		protected.POST("/top-up", routerOpt.TransactionHandler.TopUp)
-		protected.POST("/transfer", routerOpt.TransactionHandler.Transfer)
-		protected.GET("/list-transaction", routerOpt.TransactionHandler.ListTransaction)
 		protected.GET("/profile", routerOpt.UserHandler.GetProfile)
 	}
 	router.Use()

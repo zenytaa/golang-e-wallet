@@ -48,7 +48,6 @@ CREATE TABLE transactions(
     id BIGSERIAL PRIMARY KEY,
     sender_wallet_id INT NOT NULL REFERENCES wallets(id),
     recipient_wallet_id INT NOT NULL REFERENCES wallets(id),
-    recipient_username VARCHAR NOT NULL,
     amount DECIMAL NOT NULL CHECK(amount > 0),
     source_of_fund_id INT NOT NULL REFERENCES source_of_funds(id),
     description TEXT NOT NULL,
