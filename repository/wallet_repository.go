@@ -8,7 +8,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx"
 )
 
 type WalletRepoOpts struct {
@@ -68,8 +68,6 @@ func (r *WalletRepositoryImpl) Save(ctx context.Context, wallet *entity.Wallet) 
 	values = append(values, wallet.UserId)
 	values = append(values, wallet.WalletNumber)
 	values = append(values, wallet.Balance)
-	values = append(values, wallet.CreatedAt)
-	values = append(values, wallet.UpdatedAt)
 
 	SQL := `
 	INSERT INTO wallets (user_id, wallet_number, balance, created_at, updated_at)
@@ -84,7 +82,7 @@ func (r *WalletRepositoryImpl) Save(ctx context.Context, wallet *entity.Wallet) 
 	}
 
 	if err != nil {
-		var pgErr *pgconn.PgError
+		var pgErr pgx.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == constant.ViolatesUniqueConstraintPgErrCode {
 			return nil, apperror.ErrBadRequest()
 		}

@@ -29,7 +29,7 @@ func (h *AuthHandlerImpl) Register(ctx *gin.Context) {
 		return
 	}
 
-	userResponse, err := h.authUsecase.Register(ctx, authRequest)
+	err = h.authUsecase.RegisterWithInTransactor(ctx, authRequest)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -38,7 +38,6 @@ func (h *AuthHandlerImpl) Register(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, dto.WebResponse{
 		Code:    http.StatusOK,
 		Message: constant.ResponseMsgRegisterSuccess,
-		Data:    userResponse,
 	})
 }
 

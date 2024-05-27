@@ -8,7 +8,6 @@ import (
 	"assignment-go-rest-api/utils"
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -24,8 +23,8 @@ type AuthUsecaseOpts struct {
 }
 
 type AuthUsecase interface {
-	Register(ctx context.Context, request dto.AuthRegisterRequest) (*dto.AuthRegisterResponse, error)
-	RegisterWithInTransactor(ctx context.Context, request dto.AuthRegisterRequest) (*dto.AuthRegisterResponse, error)
+	Register(ctx context.Context, request dto.AuthRegisterRequest) error
+	RegisterWithInTransactor(ctx context.Context, request dto.AuthRegisterRequest) error
 	Login(ctx context.Context, request dto.AuthLoginRequest) (*string, error)
 	ForgotPassword(ctx context.Context, request dto.ForgotPasswordRequest) (*dto.ForgotPasswordResponse, error)
 	ResetPassword(ctx context.Context, request dto.ResetPasswordRequest) (*dto.ResetPasswordResponse, error)
@@ -47,20 +46,12 @@ func NewAuthUsecase(authuOpts *AuthUsecaseOpts) AuthUsecase {
 	}
 }
 
-func (u *AuthUsecaseImpl) Register(ctx context.Context, request dto.AuthRegisterRequest) (*dto.AuthRegisterResponse, error) {
-	user, err := u.userRepository.GetByEmail(ctx, request.Email)
-	if err != nil {
-		return nil, apperror.ErrInternalServer()
-	}
-	if user.Id != 0 {
-		return nil, apperror.ErrEmailAlreadyRegistered()
-	}
-
+func (u *AuthUsecaseImpl) Register(ctx context.Context, request dto.AuthRegisterRequest) error {
 	hashCostString := os.Getenv("HASH_COST")
 	hashCost, _ := strconv.Atoi(hashCostString)
 	hashPassword, err := utils.HashPassword(request.Password, hashCost)
 	if err != nil {
-		return nil, apperror.ErrInternalServer()
+		return err
 	}
 
 	createUser := entity.User{
@@ -71,15 +62,7 @@ func (u *AuthUsecaseImpl) Register(ctx context.Context, request dto.AuthRegister
 
 	newUser, err := u.userRepository.Save(ctx, &createUser)
 	if err != nil {
-		return nil, apperror.ErrInternalServer()
-	}
-
-	wallet, err := u.walletRepository.GetByUserId(ctx, newUser.Id)
-	if err != nil {
-		return nil, apperror.ErrInternalServer()
-	}
-	if wallet.Id != 0 {
-		return nil, apperror.ErrWalletAlreadyCreated()
+		return err
 	}
 
 	createWallet := entity.Wallet{
@@ -88,27 +71,27 @@ func (u *AuthUsecaseImpl) Register(ctx context.Context, request dto.AuthRegister
 		Balance:      decimal.New(0, 0),
 	}
 
-	newWallet, err := u.walletRepository.Save(ctx, &createWallet)
+	_, err = u.walletRepository.Save(ctx, &createWallet)
 	if err != nil {
-		return nil, apperror.ErrInternalServer()
+		return err
 	}
 
-	return dto.ToAuthRegisterResponse(*newUser, *newWallet), nil
+	return nil
 }
 
-func (u *AuthUsecaseImpl) RegisterWithInTransactor(ctx context.Context, request dto.AuthRegisterRequest) (*dto.AuthRegisterResponse, error) {
+func (u *AuthUsecaseImpl) RegisterWithInTransactor(ctx context.Context, request dto.AuthRegisterRequest) error {
 	_, err := u.transactor.WithinTransactor(ctx, func(ctx context.Context) (interface{}, error) {
-		response, err := u.Register(ctx, request)
+		err := u.Register(ctx, request)
 		if err != nil {
 			return nil, err
 		}
-		return response, nil
+		return nil, nil
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return nil, nil
+	return nil
 }
 
 func (u *AuthUsecaseImpl) Login(ctx context.Context, request dto.AuthLoginRequest) (*string, error) {
@@ -144,7 +127,6 @@ func (u *AuthUsecaseImpl) Login(ctx context.Context, request dto.AuthLoginReques
 
 func (u *AuthUsecaseImpl) ForgotPassword(ctx context.Context, request dto.ForgotPasswordRequest) (*dto.ForgotPasswordResponse, error) {
 	user, err := u.userRepository.GetByEmail(ctx, request.Email)
-	fmt.Println(user)
 	if err != nil {
 		return nil, apperror.ErrInternalServer()
 	}

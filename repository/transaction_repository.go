@@ -8,7 +8,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx"
 )
 
 type TransactionRepoOpts struct {
@@ -44,7 +44,7 @@ func (r *TransactionRepositoryImpl) CreateOne(ctx context.Context, tc entity.Tra
 	}
 
 	if err != nil {
-		var pgErr *pgconn.PgError
+		var pgErr pgx.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == constant.ViolatesUniqueConstraintPgErrCode {
 			return 0, apperror.ErrBadRequest()
 		}

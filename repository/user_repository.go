@@ -8,7 +8,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx"
 )
 
 type UserRepoOpts struct {
@@ -38,8 +38,6 @@ func (r *UserRepositoryImpl) Save(ctx context.Context, user *entity.User) (*enti
 	values = append(values, user.Email)
 	values = append(values, user.Username)
 	values = append(values, user.Password)
-	values = append(values, user.CreatedAt)
-	values = append(values, user.UpdatedAt)
 
 	SQL := `
 	INSERT INTO users (email, username ,password, created_at, updated_at) VALUES
@@ -54,7 +52,7 @@ func (r *UserRepositoryImpl) Save(ctx context.Context, user *entity.User) (*enti
 	}
 
 	if err != nil {
-		var pgErr *pgconn.PgError
+		var pgErr pgx.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == constant.ViolatesUniqueConstraintPgErrCode {
 			return nil, apperror.ErrEmailAlreadyRegistered()
 		}
