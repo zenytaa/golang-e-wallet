@@ -56,7 +56,7 @@ func ErrWalletAlreadyCreated() error {
 }
 
 func ErrWalletNotFound() error {
-	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgWalletNotFound)
+	return NewCustomError(http.StatusNotFound, constant.ResponseMsgWalletNotFound)
 }
 
 func ErrWalletRecipientNotFound() error {

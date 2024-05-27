@@ -7,7 +7,6 @@ import (
 	"assignment-go-rest-api/repository"
 	"assignment-go-rest-api/utils"
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"os"
@@ -18,43 +17,38 @@ import (
 )
 
 type AuthUsecaseOpts struct {
-	Db                      *sql.DB
 	UserRepository          repository.UserRepository
 	WalletRepository        repository.WalletRepository
 	PasswordResetRepository repository.PasswordResetRepository
+	Transactor              repository.Transactor
 }
 
 type AuthUsecase interface {
 	Register(ctx context.Context, request dto.AuthRegisterRequest) (*dto.AuthRegisterResponse, error)
+	RegisterWithInTransactor(ctx context.Context, request dto.AuthRegisterRequest) (*dto.AuthRegisterResponse, error)
 	Login(ctx context.Context, request dto.AuthLoginRequest) (*string, error)
 	ForgotPassword(ctx context.Context, request dto.ForgotPasswordRequest) (*dto.ForgotPasswordResponse, error)
 	ResetPassword(ctx context.Context, request dto.ResetPasswordRequest) (*dto.ResetPasswordResponse, error)
 }
 
 type AuthUsecaseImpl struct {
-	db                      *sql.DB
 	userRepository          repository.UserRepository
 	walletRepository        repository.WalletRepository
 	passwordResetRepository repository.PasswordResetRepository
+	transactor              repository.Transactor
 }
 
 func NewAuthUsecase(authuOpts *AuthUsecaseOpts) AuthUsecase {
 	return &AuthUsecaseImpl{
-		db:                      authuOpts.Db,
 		userRepository:          authuOpts.UserRepository,
 		walletRepository:        authuOpts.WalletRepository,
 		passwordResetRepository: authuOpts.PasswordResetRepository,
+		transactor:              authuOpts.Transactor,
 	}
 }
 
 func (u *AuthUsecaseImpl) Register(ctx context.Context, request dto.AuthRegisterRequest) (*dto.AuthRegisterResponse, error) {
-	tx, err := u.db.Begin()
-	if err != nil {
-		return nil, err
-	}
-	defer utils.CommitOrRollback(tx)
-
-	user, err := u.userRepository.GetByEmail(ctx, tx, request.Email)
+	user, err := u.userRepository.GetByEmail(ctx, request.Email)
 	if err != nil {
 		return nil, apperror.ErrInternalServer()
 	}
@@ -75,12 +69,12 @@ func (u *AuthUsecaseImpl) Register(ctx context.Context, request dto.AuthRegister
 		Password: string(hashPassword),
 	}
 
-	newUser, err := u.userRepository.Save(ctx, tx, &createUser)
+	newUser, err := u.userRepository.Save(ctx, &createUser)
 	if err != nil {
 		return nil, apperror.ErrInternalServer()
 	}
 
-	wallet, err := u.walletRepository.GetByUserId(ctx, tx, newUser.Id)
+	wallet, err := u.walletRepository.GetByUserId(ctx, newUser.Id)
 	if err != nil {
 		return nil, apperror.ErrInternalServer()
 	}
@@ -94,7 +88,7 @@ func (u *AuthUsecaseImpl) Register(ctx context.Context, request dto.AuthRegister
 		Balance:      decimal.New(0, 0),
 	}
 
-	newWallet, err := u.walletRepository.Save(ctx, tx, &createWallet)
+	newWallet, err := u.walletRepository.Save(ctx, &createWallet)
 	if err != nil {
 		return nil, apperror.ErrInternalServer()
 	}
@@ -102,13 +96,22 @@ func (u *AuthUsecaseImpl) Register(ctx context.Context, request dto.AuthRegister
 	return dto.ToAuthRegisterResponse(*newUser, *newWallet), nil
 }
 
-func (u *AuthUsecaseImpl) Login(ctx context.Context, request dto.AuthLoginRequest) (*string, error) {
-	tx, err := u.db.Begin()
+func (u *AuthUsecaseImpl) RegisterWithInTransactor(ctx context.Context, request dto.AuthRegisterRequest) (*dto.AuthRegisterResponse, error) {
+	_, err := u.transactor.WithinTransactor(ctx, func(ctx context.Context) (interface{}, error) {
+		response, err := u.Register(ctx, request)
+		if err != nil {
+			return nil, err
+		}
+		return response, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	defer utils.CommitOrRollback(tx)
 
+	return nil, nil
+}
+
+func (u *AuthUsecaseImpl) Login(ctx context.Context, request dto.AuthLoginRequest) (*string, error) {
 	if len(request.Email) == 0 {
 		return nil, apperror.ErrEmailRequired()
 	}
@@ -116,7 +119,7 @@ func (u *AuthUsecaseImpl) Login(ctx context.Context, request dto.AuthLoginReques
 		return nil, apperror.ErrPasswordRequired()
 	}
 
-	user, err := u.userRepository.GetByEmail(ctx, tx, request.Email)
+	user, err := u.userRepository.GetByEmail(ctx, request.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -140,13 +143,7 @@ func (u *AuthUsecaseImpl) Login(ctx context.Context, request dto.AuthLoginReques
 }
 
 func (u *AuthUsecaseImpl) ForgotPassword(ctx context.Context, request dto.ForgotPasswordRequest) (*dto.ForgotPasswordResponse, error) {
-	tx, err := u.db.Begin()
-	if err != nil {
-		return nil, err
-	}
-	defer utils.CommitOrRollback(tx)
-
-	user, err := u.userRepository.GetByEmail(ctx, tx, request.Email)
+	user, err := u.userRepository.GetByEmail(ctx, request.Email)
 	fmt.Println(user)
 	if err != nil {
 		return nil, apperror.ErrInternalServer()
@@ -174,12 +171,6 @@ func (u *AuthUsecaseImpl) ForgotPassword(ctx context.Context, request dto.Forgot
 }
 
 func (u *AuthUsecaseImpl) ResetPassword(ctx context.Context, request dto.ResetPasswordRequest) (*dto.ResetPasswordResponse, error) {
-	tx, err := u.db.Begin()
-	if err != nil {
-		return nil, err
-	}
-	defer utils.CommitOrRollback(tx)
-
 	passwordReset, err := u.passwordResetRepository.GetByToken(ctx, request.Token)
 	if err != nil {
 		return nil, apperror.ErrInternalServer()
@@ -198,7 +189,7 @@ func (u *AuthUsecaseImpl) ResetPassword(ctx context.Context, request dto.ResetPa
 		return nil, errors.New("failed to hash password")
 	}
 
-	user, err := u.userRepository.GetById(ctx, tx, passwordReset.UserId)
+	user, err := u.userRepository.GetById(ctx, passwordReset.UserId)
 	if err != nil {
 		return nil, apperror.ErrInternalServer()
 	}
@@ -207,7 +198,7 @@ func (u *AuthUsecaseImpl) ResetPassword(ctx context.Context, request dto.ResetPa
 	}
 	user.Password = string(passwordHash)
 
-	_, err = u.userRepository.Update(ctx, tx, user)
+	_, err = u.userRepository.Update(ctx, user)
 	if err != nil {
 		return nil, err
 	}

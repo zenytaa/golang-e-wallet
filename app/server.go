@@ -10,24 +10,22 @@ import (
 )
 
 func createRouter(db *sql.DB) *gin.Engine {
-	userRepository := repository.NewUserRepository()
-	walletRepository := repository.NewWalletRepository()
+	userRepository := repository.NewUserRepository(&repository.UserRepoOpts{Db: db})
+	walletRepository := repository.NewWalletRepository(&repository.WalletRepoOpts{Db: db})
 	passwordResetRepository := repository.NewPasswordResetRepository(db)
 	// sourceFundRepository := repository.NewSourceFundRepository(db)
 
 	authUsecase := usecase.NewAuthUsecase(&usecase.AuthUsecaseOpts{
-		Db:                      db,
 		UserRepository:          userRepository,
 		WalletRepository:        walletRepository,
 		PasswordResetRepository: passwordResetRepository,
+		Transactor:              repository.NewTransactor(db),
 	})
 	userUsecase := usecase.NewUserUsecase(&usecase.UserUsecaseOpts{
-		Db:               db,
 		UserRepository:   userRepository,
 		WalletRepository: walletRepository,
 	})
 	walletUsecase := usecase.NewWalletUsecase(&usecase.WalletUsecaseOpts{
-		Db:               db,
 		UserRepository:   userRepository,
 		WalletRepository: walletRepository,
 	})

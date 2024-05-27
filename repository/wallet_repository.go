@@ -1,28 +1,42 @@
 package repository
 
 import (
+	"assignment-go-rest-api/apperror"
+	"assignment-go-rest-api/constant"
 	"assignment-go-rest-api/entity"
-	"assignment-go-rest-api/utils"
 	"context"
 	"database/sql"
+	"errors"
+
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
+type WalletRepoOpts struct {
+	Db *sql.DB
+}
+
 type WalletRepository interface {
-	Save(ctx context.Context, tx *sql.Tx, wallet *entity.Wallet) (*entity.Wallet, error)
-	GetByUserId(ctx context.Context, tx *sql.Tx, userId uint) (*entity.Wallet, error)
-	GetByWalletNumber(ctx context.Context, tx *sql.Tx, walletNumber string) (*entity.Wallet, error)
-	Update(ctx context.Context, tx *sql.Tx, wallet *entity.Wallet) (*entity.Wallet, error)
-	GetByWalletId(ctx context.Context, tx *sql.Tx, walletId uint) (*entity.Wallet, error)
+	Save(ctx context.Context, wallet *entity.Wallet) (*entity.Wallet, error)
+	GetByUserId(ctx context.Context, userId uint) (*entity.Wallet, error)
+	GetByWalletNumber(ctx context.Context, walletNumber string) (*entity.Wallet, error)
+	Update(ctx context.Context, wallet *entity.Wallet) (*entity.Wallet, error)
+	GetByWalletId(ctx context.Context, walletId uint) (*entity.Wallet, error)
 }
 
 type WalletRepositoryImpl struct {
+	db *sql.DB
 }
 
-func NewWalletRepository() WalletRepository {
-	return &WalletRepositoryImpl{}
+func NewWalletRepository(walletROpts *WalletRepoOpts) WalletRepository {
+	return &WalletRepositoryImpl{
+		db: walletROpts.Db,
+	}
 }
 
-func (r *WalletRepositoryImpl) GetByWalletId(ctx context.Context, tx *sql.Tx, walletId uint) (*entity.Wallet, error) {
+func (r *WalletRepositoryImpl) GetByWalletId(ctx context.Context, walletId uint) (*entity.Wallet, error) {
+	wallet := entity.Wallet{}
+	var err error
+
 	SQL := `
 	SELECT id, user_id, wallet_number, balance, created_at, updated_at, deleted_at
 	FROM wallets
@@ -30,47 +44,96 @@ func (r *WalletRepositoryImpl) GetByWalletId(ctx context.Context, tx *sql.Tx, wa
 	AND id = $1
 	;`
 
-	rows, err := tx.QueryContext(ctx, SQL, walletId)
-	utils.IfErrorLogPrint(err)
-	defer rows.Close()
+	tx := extractTx(ctx)
+	if tx != nil {
+		err = tx.QueryRowContext(ctx, SQL, walletId).Scan(&wallet.Id, &wallet.UserId, &wallet.WalletNumber, &wallet.Balance, &wallet.CreatedAt, &wallet.UpdatedAt, &wallet.DeletedAt)
+	} else {
+		err = r.db.QueryRowContext(ctx, SQL, walletId).Scan(&wallet.Id, &wallet.UserId, &wallet.WalletNumber, &wallet.Balance, &wallet.CreatedAt, &wallet.UpdatedAt, &wallet.DeletedAt)
+	}
 
-	wallet := entity.Wallet{}
-	if rows.Next() {
-		err := rows.Scan(&wallet.Id, &wallet.UserId, &wallet.WalletNumber, &wallet.Balance, &wallet.CreatedAt, &wallet.UpdatedAt, &wallet.DeletedAt)
-		utils.IfErrorLogPrint(err)
-		return &wallet, nil
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, apperror.ErrWalletNotFound()
+		}
+		return nil, err
 	}
 
 	return &wallet, err
 }
 
-func (r *WalletRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, wallet *entity.Wallet) (*entity.Wallet, error) {
+func (r *WalletRepositoryImpl) Save(ctx context.Context, wallet *entity.Wallet) (*entity.Wallet, error) {
+	var err error
+	newWallet := entity.Wallet{}
+	values := []interface{}{}
+	values = append(values, wallet.UserId)
+	values = append(values, wallet.WalletNumber)
+	values = append(values, wallet.Balance)
+	values = append(values, wallet.CreatedAt)
+	values = append(values, wallet.UpdatedAt)
+
 	SQL := `
 	INSERT INTO wallets (user_id, wallet_number, balance, created_at, updated_at)
 	VALUES ($1, $2, $3, NOW(), NOW()) RETURNING id, created_at, updated_at
 	;`
 
-	err := tx.QueryRowContext(ctx, SQL, wallet.UserId, wallet.WalletNumber, wallet.Balance).
-		Scan(&wallet.Id, &wallet.CreatedAt, &wallet.UpdatedAt)
-	utils.IfErrorLogPrint(err)
+	tx := extractTx(ctx)
+	if tx != nil {
+		err = tx.QueryRowContext(ctx, SQL, values...).Scan(&newWallet.Id, &newWallet.CreatedAt, &newWallet.UpdatedAt)
+	} else {
+		err = r.db.QueryRowContext(ctx, SQL, values...).Scan(&newWallet.Id, &newWallet.CreatedAt, &newWallet.UpdatedAt)
+	}
 
-	return wallet, err
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == constant.ViolatesUniqueConstraintPgErrCode {
+			return nil, apperror.ErrBadRequest()
+		}
+	}
+
+	return &newWallet, err
 }
 
-func (r *WalletRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, wallet *entity.Wallet) (*entity.Wallet, error) {
+func (r *WalletRepositoryImpl) Update(ctx context.Context, wallet *entity.Wallet) (*entity.Wallet, error) {
+	var err error
+	var stmt *sql.Stmt
+
 	SQL := `
 	UPDATE wallets
 	SET balance = $1, updated_at = NOW()
 	WHERE id = $2
 	;`
 
-	_, err := tx.ExecContext(ctx, SQL, wallet.Balance, wallet.Id)
-	utils.IfErrorLogPrint(err)
+	tx := extractTx(ctx)
+	if tx != nil {
+		stmt, err = tx.PrepareContext(ctx, SQL)
+	} else {
+		stmt, err = r.db.PrepareContext(ctx, SQL)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := stmt.ExecContext(ctx, wallet.Balance, wallet.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+	if rows == 0 {
+		return nil, apperror.ErrWalletNotFound()
+	}
 
 	return wallet, err
 }
 
-func (r *WalletRepositoryImpl) GetByUserId(ctx context.Context, tx *sql.Tx, userId uint) (*entity.Wallet, error) {
+func (r *WalletRepositoryImpl) GetByUserId(ctx context.Context, userId uint) (*entity.Wallet, error) {
+	wallet := entity.Wallet{}
+	var err error
+
 	SQL := `
 	SELECT id, user_id, wallet_number, balance, created_at, updated_at, deleted_at
 	FROM wallets
@@ -78,21 +141,27 @@ func (r *WalletRepositoryImpl) GetByUserId(ctx context.Context, tx *sql.Tx, user
 	AND user_id = $1
 	;`
 
-	rows, err := tx.QueryContext(ctx, SQL, userId)
-	utils.IfErrorLogPrint(err)
-	defer rows.Close()
+	tx := extractTx(ctx)
+	if tx != nil {
+		err = tx.QueryRowContext(ctx, SQL, userId).Scan(&wallet.Id, &wallet.UserId, &wallet.WalletNumber, &wallet.Balance, &wallet.CreatedAt, &wallet.UpdatedAt, &wallet.DeletedAt)
+	} else {
+		err = r.db.QueryRowContext(ctx, SQL, userId).Scan(&wallet.Id, &wallet.UserId, &wallet.WalletNumber, &wallet.Balance, &wallet.CreatedAt, &wallet.UpdatedAt, &wallet.DeletedAt)
+	}
 
-	wallet := entity.Wallet{}
-	if rows.Next() {
-		err := rows.Scan(&wallet.Id, &wallet.UserId, &wallet.WalletNumber, &wallet.Balance, &wallet.CreatedAt, &wallet.UpdatedAt, &wallet.DeletedAt)
-		utils.IfErrorLogPrint(err)
-		return &wallet, nil
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, apperror.ErrWalletNotFound()
+		}
+		return nil, err
 	}
 
 	return &wallet, err
 }
 
-func (r *WalletRepositoryImpl) GetByWalletNumber(ctx context.Context, tx *sql.Tx, walletNumber string) (*entity.Wallet, error) {
+func (r *WalletRepositoryImpl) GetByWalletNumber(ctx context.Context, walletNumber string) (*entity.Wallet, error) {
+	wallet := entity.Wallet{}
+	var err error
+
 	SQL := `
 	SELECT id, user_id, wallet_number, balance, created_at, updated_at, deleted_at
 	FROM wallets
@@ -100,15 +169,18 @@ func (r *WalletRepositoryImpl) GetByWalletNumber(ctx context.Context, tx *sql.Tx
 	AND wallet_number = $1
 	;`
 
-	rows, err := tx.QueryContext(ctx, SQL, walletNumber)
-	utils.IfErrorLogPrint(err)
-	defer rows.Close()
+	tx := extractTx(ctx)
+	if tx != nil {
+		err = tx.QueryRowContext(ctx, SQL, walletNumber).Scan(&wallet.Id, &wallet.UserId, &wallet.WalletNumber, &wallet.Balance, &wallet.CreatedAt, &wallet.UpdatedAt, &wallet.DeletedAt)
+	} else {
+		err = r.db.QueryRowContext(ctx, SQL, walletNumber).Scan(&wallet.Id, &wallet.UserId, &wallet.WalletNumber, &wallet.Balance, &wallet.CreatedAt, &wallet.UpdatedAt, &wallet.DeletedAt)
+	}
 
-	wallet := entity.Wallet{}
-	if rows.Next() {
-		err := rows.Scan(&wallet.Id, &wallet.UserId, &wallet.WalletNumber, &wallet.Balance, &wallet.CreatedAt, &wallet.UpdatedAt, &wallet.DeletedAt)
-		utils.IfErrorLogPrint(err)
-		return &wallet, nil
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, apperror.ErrWalletNotFound()
+		}
+		return nil, err
 	}
 
 	return &wallet, err
