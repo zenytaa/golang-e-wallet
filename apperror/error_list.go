@@ -92,20 +92,12 @@ func ErrPasswordNotMatch() error {
 	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgPasswordNotMatch)
 }
 
-func ErrMiniumTopUp() error {
-	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgTopUpFailed+"! minimum top up should be more than "+strconv.Itoa(constant.MinTopUp))
+func ErrLimitTopUp() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgTopUpFailed+"! top up should be between "+strconv.Itoa(constant.MinTopUp)+" and "+strconv.Itoa(constant.MaxTopUp))
 }
 
-func ErrMaximumTopUp() error {
-	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgTopUpFailed+"! maximum top up should be less than "+strconv.Itoa(constant.MaxTopUp))
-}
-
-func ErrMiniumTransfer() error {
-	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgTransferFailed+"! minimum transfer should be more than "+strconv.Itoa(constant.MinTransfer))
-}
-
-func ErrMaximumTransfer() error {
-	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgTransferFailed+"! maximum transfer should be less than "+strconv.Itoa(constant.MaxTransfer))
+func ErrLimitTransfer() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgTransferFailed+"! transfer should be between "+strconv.Itoa(constant.MinTransfer)+" and "+strconv.Itoa(constant.MaxTransfer))
 }
 
 func ErrTransactionNotFound() error {

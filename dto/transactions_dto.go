@@ -15,17 +15,16 @@ type TopUpCreateRequest struct {
 }
 
 type TopUpResponse struct {
-	Id              uint            `json:"id" binding:"required"`
-	SenderWallet    WalletResponse  `json:"sender_wallet" binding:"required"`
-	RecipientWallet WalletResponse  `json:"recipient_wallet" binding:"required"`
-	Amount          decimal.Decimal `json:"amount" binding:"required"`
-	SourceOfFundId  uint            `json:"source_of_fund_id" binding:"required"`
-	Description     string          `json:"description" binding:"required,len=35"`
-	CreatedAt       time.Time       `json:"created_at" binding:"required"`
+	Id              uint            `json:"id"`
+	SenderWallet    WalletResponse  `json:"sender_wallet"`
+	RecipientWallet WalletResponse  `json:"recipient_wallet"`
+	Amount          decimal.Decimal `json:"amount"`
+	SourceOfFund    string          `json:"source_of_fund"`
+	Description     string          `json:"description"`
+	CreatedAt       time.Time       `json:"created_at"`
 }
 
 type TransferCreateRequest struct {
-	SenderUserId          uint
 	Amount                decimal.Decimal `json:"amount" binding:"required"`
 	RecipientWalletNumber string          `json:"recipient_wallet_number" binding:"required,gte=0,lte=13"`
 	SourceFundId          uint            `json:"source_of_fund_id" binding:"required"`
@@ -33,14 +32,14 @@ type TransferCreateRequest struct {
 }
 
 type TransferResponse struct {
-	Id              uint            `json:"id" binding:"required"`
-	SenderWallet    WalletResponse  `json:"sender_wallet" binding:"required"`
-	RecipientWallet WalletResponse  `json:"recipient_wallet" binding:"required"`
-	Amount          decimal.Decimal `json:"amount" binding:"required,gte=50000,lte=10000000"`
-	SourceFundId    uint            `json:"source_of_fund_id" binding:"required"`
-	Description     string          `json:"description" binding:"len=35"`
-	CreatedAt       time.Time       `json:"created_at" binding:"required"`
-	UpdatedAt       time.Time       `json:"updated_at" binding:"required"`
+	Id              uint            `json:"id"`
+	SenderWallet    WalletResponse  `json:"sender_wallet"`
+	RecipientWallet WalletResponse  `json:"recipient_wallet"`
+	Amount          decimal.Decimal `json:"amount"`
+	SourceFund      string          `json:"source_of_fund"`
+	Description     string          `json:"description"`
+	CreatedAt       time.Time       `json:"created_at"`
+	UpdatedAt       time.Time       `json:"updated_at"`
 }
 
 type ListTransactionQuery struct {
@@ -60,7 +59,7 @@ func ToTopUpResponse(ts entity.Transaction) *TopUpResponse {
 		SenderWallet:    *ToWalletResponse(ts.SenderWallet),
 		RecipientWallet: *ToWalletResponse(ts.RecipientWallet),
 		Amount:          ts.Amount,
-		SourceOfFundId:  ts.SourceOfFundId,
+		SourceOfFund:    ts.SourceOfFund.FundName,
 		Description:     ts.Description,
 		CreatedAt:       ts.CreatedAt,
 	}
@@ -72,10 +71,9 @@ func ToTransferResponse(ts entity.Transaction) *TransferResponse {
 		SenderWallet:    *ToWalletResponse(ts.SenderWallet),
 		RecipientWallet: *ToWalletResponse(ts.RecipientWallet),
 		Amount:          ts.Amount,
-		SourceFundId:    ts.SourceOfFundId,
+		SourceFund:      ts.SourceOfFund.FundName,
 		Description:     ts.Description,
 		CreatedAt:       ts.CreatedAt,
-		UpdatedAt:       ts.UpdatedAt,
 	}
 }
 
@@ -85,7 +83,7 @@ func ToListTransactionResponse(ts entity.Transaction) *ListTransactionResponse {
 		SenderWallet:    *ToWalletResponse(ts.SenderWallet),
 		RecipientWallet: *ToWalletResponse(ts.RecipientWallet),
 		Amount:          ts.Amount,
-		SourceFundId:    ts.SourceOfFundId,
+		SourceFund:      ts.SourceOfFund.FundName,
 		Description:     ts.Description,
 		CreatedAt:       ts.CreatedAt,
 		UpdatedAt:       ts.UpdatedAt,

@@ -56,7 +56,7 @@ type ListTransactionResponse struct {
 	SenderWallet    WalletResponse  `json:"sender_wallet"`
 	RecipientWallet WalletResponse  `json:"recipient_wallet"`
 	Amount          decimal.Decimal `json:"amount"`
-	SourceFundId    uint            `json:"source_of_fund_id"`
+	SourceFund      string          `json:"source_of_fund"`
 	Description     string          `json:"description"`
 	CreatedAt       time.Time       `json:"created_at"`
 	UpdatedAt       time.Time       `json:"updated_at"`

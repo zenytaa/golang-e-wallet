@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"assignment-go-rest-api/apperror"
+	"assignment-go-rest-api/constant"
 	"assignment-go-rest-api/entity"
 	"assignment-go-rest-api/repository"
 	"context"
@@ -38,7 +39,11 @@ func NewTransactionUsecase(transUOpts *TransactionUsecaseOpts) TransactionUsecas
 }
 
 func (u *TransactionUsecaseImpl) Transfer(ctx context.Context, tc entity.Transaction) (*entity.Transaction, error) {
-	_, err := u.SourceFundRepository.GetById(ctx, tc.SourceOfFundId)
+	if tc.Amount.IntPart() < int64(constant.MinTransfer) || tc.Amount.IntPart() > int64(constant.MaxTransfer) {
+		return nil, apperror.ErrLimitTransfer()
+	}
+
+	sourceFund, err := u.SourceFundRepository.GetById(ctx, tc.SourceOfFund.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -53,16 +58,19 @@ func (u *TransactionUsecaseImpl) Transfer(ctx context.Context, tc entity.Transac
 		return nil, err
 	}
 
+	if tc.RecipientWallet.WalletNumber == senderWallet.WalletNumber {
+		return nil, apperror.ErrBadRequest()
+	}
+
 	if senderWallet.Balance.LessThan(tc.Amount) || senderWallet.Balance.LessThan(decimal.NewFromInt(0)) {
 		return nil, apperror.ErrInsufficientBalance()
 	}
 
-	senderTcId, err := u.TransactionRepository.CreateOne(ctx, entity.Transaction{
-		User:            entity.User{Id: senderWallet.User.Id},
+	senderTc, err := u.TransactionRepository.CreateOne(ctx, entity.Transaction{
 		SenderWallet:    *senderWallet,
 		RecipientWallet: *recipientWallet,
-		Amount:          senderWallet.Balance.Sub(tc.Amount),
-		SourceOfFundId:  tc.SourceOfFundId,
+		Amount:          tc.Amount,
+		SourceOfFund:    tc.SourceOfFund,
 		Description:     tc.Description,
 	})
 
@@ -71,19 +79,43 @@ func (u *TransactionUsecaseImpl) Transfer(ctx context.Context, tc entity.Transac
 	}
 
 	_, err = u.TransactionRepository.CreateOne(ctx, entity.Transaction{
-		User:            entity.User{Id: recipientWallet.User.Id},
 		SenderWallet:    *senderWallet,
 		RecipientWallet: *recipientWallet,
-		Amount:          recipientWallet.Balance.Add(tc.Amount),
-		SourceOfFundId:  tc.SourceOfFundId,
+		Amount:          tc.Amount,
+		SourceOfFund:    tc.SourceOfFund,
 		Description:     tc.Description,
 	})
-
 	if err != nil {
 		return nil, err
 	}
 
-	return senderTcId, nil
+	// update wallet sender
+	senderWallet.Balance = senderWallet.Balance.Sub(tc.Amount)
+	_, err = u.WalletRepository.Update(ctx, senderWallet)
+	if err != nil {
+		return nil, err
+	}
+
+	// update wallet recipient
+	recipientWallet.Balance = recipientWallet.Balance.Add(tc.Amount)
+	_, err = u.WalletRepository.Update(ctx, recipientWallet)
+	if err != nil {
+		return nil, err
+	}
+
+	tcResponse := entity.Transaction{
+		Id:              senderTc.Id,
+		SenderWallet:    *senderWallet,
+		RecipientWallet: *recipientWallet,
+		Amount:          tc.Amount,
+		SourceOfFund:    *sourceFund,
+		Description:     tc.Description,
+	}
+
+	tcResponse.SenderWallet.Balance = decimal.NewFromInt(0)
+	tcResponse.RecipientWallet.Balance = decimal.NewFromInt(0)
+
+	return &tcResponse, nil
 }
 
 func (u *TransactionUsecaseImpl) TransferWithTransactor(ctx context.Context, tc entity.Transaction) (*entity.Transaction, error) {
@@ -91,11 +123,12 @@ func (u *TransactionUsecaseImpl) TransferWithTransactor(ctx context.Context, tc 
 	var err error
 
 	_, err = u.Transactor.WithinTransactor(ctx, func(ctx context.Context) (interface{}, error) {
-		newTc, err = u.Transfer(ctx, tc)
+		res, err := u.Transfer(ctx, tc)
 		if err != nil {
 			return nil, err
 		}
-		return nil, nil
+		newTc = res
+		return res, nil
 	})
 	if err != nil {
 		return nil, err
