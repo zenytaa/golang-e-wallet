@@ -1,38 +1,25 @@
 package middleware
 
 import (
-	"assignment-go-rest-api/constant"
-	"assignment-go-rest-api/dto"
-	"assignment-go-rest-api/usecase"
+	"assignment-go-rest-api/apperror"
 	"assignment-go-rest-api/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-func JwtAuthMiddleware(userUsecase usecase.UserUsecase) gin.HandlerFunc {
+func JWTAuthMiddleware(config utils.Config) func(*gin.Context) {
 	return func(ctx *gin.Context) {
-		uid, err := utils.VerifyExtractTokenClaim(ctx)
-		if err != nil {
-			ctx.Error(err)
-			ctx.Abort()
+		authorized, data, err := utils.NewJwtProvider(config).IsAuthorized(ctx)
+		if !authorized && err != nil && data == nil {
+			if err.Error() == "token already expired" {
+				ctx.AbortWithStatusJSON(http.StatusForbidden, apperror.ErrForbidden())
+				return
+			}
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, apperror.ErrForbidden())
 			return
 		}
-
-		param := &dto.UserRequestParam{
-			UserId: uid,
-		}
-		user, err := userUsecase.GetUser(ctx, param)
-
-		if err != nil {
-			ctx.Error(err)
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"code":    http.StatusUnauthorized,
-				"message": constant.ResponseMsgErrorUnauthorized,
-			})
-			return
-		}
-		ctx.Set("user", user)
+		ctx.Set("data", data)
 		ctx.Next()
 	}
 }

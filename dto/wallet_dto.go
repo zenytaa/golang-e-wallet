@@ -10,14 +10,14 @@ type WalletRequest struct {
 	UserId uint `json:"user_id" binding:"required"`
 }
 type WalletResponse struct {
-	User         entity.User     `json:"user"`
+	UserName     UserResponse    `json:"user"`
 	WalletNumber string          `json:"wallet_number"`
 	Balance      decimal.Decimal `json:"balance"`
 }
 
-func ToWalletResponse(wallet entity.Wallet, user entity.User) *WalletResponse {
+func ToWalletResponse(wallet entity.Wallet) *WalletResponse {
 	return &WalletResponse{
-		User:         user,
+		UserName:     *ToUserResponse(wallet.User),
 		WalletNumber: wallet.WalletNumber,
 		Balance:      wallet.Balance,
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"assignment-go-rest-api/app"
+	"assignment-go-rest-api/utils"
 	"context"
 	"log"
 	"net/http"
@@ -12,17 +13,17 @@ import (
 )
 
 func main() {
-	err := ConfigInit()
+	config, err := utils.ConfigInit()
 	if err != nil {
 		log.Fatal("need .env")
 	}
 
-	db, err := app.ConnectDB()
+	db, err := app.ConnectDB(config)
 	if err != nil {
 		log.Fatalf("can't connect to database %s", err)
 	}
 
-	router := app.InitServer(db)
+	router := app.InitServer(config, db)
 
 	err = router.Run(":8080")
 	if err != nil {

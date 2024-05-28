@@ -8,7 +8,7 @@ import (
 
 type Wallet struct {
 	Id           uint
-	UserId       uint
+	User         User
 	WalletNumber string
 	Balance      decimal.Decimal
 	CreatedAt    time.Time

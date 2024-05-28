@@ -38,17 +38,18 @@ func (r *WalletRepositoryImpl) GetByWalletId(ctx context.Context, walletId uint)
 	var err error
 
 	SQL := `
-	SELECT id, user_id, wallet_number, balance, created_at, updated_at, deleted_at
-	FROM wallets
+	SELECT w.id, w.user_id, u.username, w.wallet_number, w.balance, w.created_at, w.updated_at, w.deleted_at
+	FROM wallets w
+	JOIN users u ON w.user_id = u.id
 	WHERE deleted_at IS NULL
 	AND id = $1
 	;`
 
 	tx := extractTx(ctx)
 	if tx != nil {
-		err = tx.QueryRowContext(ctx, SQL, walletId).Scan(&wallet.Id, &wallet.UserId, &wallet.WalletNumber, &wallet.Balance, &wallet.CreatedAt, &wallet.UpdatedAt, &wallet.DeletedAt)
+		err = tx.QueryRowContext(ctx, SQL, walletId).Scan(&wallet.Id, &wallet.User.Id, &wallet.User.Username, &wallet.WalletNumber, &wallet.Balance, &wallet.CreatedAt, &wallet.UpdatedAt, &wallet.DeletedAt)
 	} else {
-		err = r.db.QueryRowContext(ctx, SQL, walletId).Scan(&wallet.Id, &wallet.UserId, &wallet.WalletNumber, &wallet.Balance, &wallet.CreatedAt, &wallet.UpdatedAt, &wallet.DeletedAt)
+		err = r.db.QueryRowContext(ctx, SQL, walletId).Scan(&wallet.Id, &wallet.User.Id, &wallet.User.Username, &wallet.WalletNumber, &wallet.Balance, &wallet.CreatedAt, &wallet.UpdatedAt, &wallet.DeletedAt)
 	}
 
 	if err != nil {
@@ -65,7 +66,7 @@ func (r *WalletRepositoryImpl) Save(ctx context.Context, wallet *entity.Wallet) 
 	var err error
 	newWallet := entity.Wallet{}
 	values := []interface{}{}
-	values = append(values, wallet.UserId)
+	values = append(values, wallet.User.Id)
 	values = append(values, wallet.WalletNumber)
 	values = append(values, wallet.Balance)
 
@@ -133,17 +134,18 @@ func (r *WalletRepositoryImpl) GetByUserId(ctx context.Context, userId uint) (*e
 	var err error
 
 	SQL := `
-	SELECT id, user_id, wallet_number, balance, created_at, updated_at, deleted_at
-	FROM wallets
+	SELECT w.id, w.user_id, u.username, w.wallet_number, w.balance, w.created_at, w.updated_at, w.deleted_at
+	FROM wallets w
+	JOIN users u ON w.user_id = u.id
 	WHERE deleted_at IS NULL
 	AND user_id = $1
 	;`
 
 	tx := extractTx(ctx)
 	if tx != nil {
-		err = tx.QueryRowContext(ctx, SQL, userId).Scan(&wallet.Id, &wallet.UserId, &wallet.WalletNumber, &wallet.Balance, &wallet.CreatedAt, &wallet.UpdatedAt, &wallet.DeletedAt)
+		err = tx.QueryRowContext(ctx, SQL, userId).Scan(&wallet.Id, &wallet.User.Id, &wallet.User.Username, &wallet.WalletNumber, &wallet.Balance, &wallet.CreatedAt, &wallet.UpdatedAt, &wallet.DeletedAt)
 	} else {
-		err = r.db.QueryRowContext(ctx, SQL, userId).Scan(&wallet.Id, &wallet.UserId, &wallet.WalletNumber, &wallet.Balance, &wallet.CreatedAt, &wallet.UpdatedAt, &wallet.DeletedAt)
+		err = r.db.QueryRowContext(ctx, SQL, userId).Scan(&wallet.Id, &wallet.User.Id, &wallet.User.Username, &wallet.WalletNumber, &wallet.Balance, &wallet.CreatedAt, &wallet.UpdatedAt, &wallet.DeletedAt)
 	}
 
 	if err != nil {
@@ -161,17 +163,18 @@ func (r *WalletRepositoryImpl) GetByWalletNumber(ctx context.Context, walletNumb
 	var err error
 
 	SQL := `
-	SELECT id, user_id, wallet_number, balance, created_at, updated_at, deleted_at
-	FROM wallets
+	SELECT w.id, w.user_id, u.username, w.wallet_number, w.balance, w.created_at, w.updated_at, w.deleted_at
+	FROM wallets w
+	JOIN users u ON w.user_id = u.id
 	WHERE deleted_at IS NULL
 	AND wallet_number = $1
 	;`
 
 	tx := extractTx(ctx)
 	if tx != nil {
-		err = tx.QueryRowContext(ctx, SQL, walletNumber).Scan(&wallet.Id, &wallet.UserId, &wallet.WalletNumber, &wallet.Balance, &wallet.CreatedAt, &wallet.UpdatedAt, &wallet.DeletedAt)
+		err = tx.QueryRowContext(ctx, SQL, walletNumber).Scan(&wallet.Id, &wallet.User.Id, &wallet.User.Username, &wallet.WalletNumber, &wallet.Balance, &wallet.CreatedAt, &wallet.UpdatedAt, &wallet.DeletedAt)
 	} else {
-		err = r.db.QueryRowContext(ctx, SQL, walletNumber).Scan(&wallet.Id, &wallet.UserId, &wallet.WalletNumber, &wallet.Balance, &wallet.CreatedAt, &wallet.UpdatedAt, &wallet.DeletedAt)
+		err = r.db.QueryRowContext(ctx, SQL, walletNumber).Scan(&wallet.Id, &wallet.User.Id, &wallet.User.Username, &wallet.WalletNumber, &wallet.Balance, &wallet.CreatedAt, &wallet.UpdatedAt, &wallet.DeletedAt)
 	}
 
 	if err != nil {
