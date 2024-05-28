@@ -87,15 +87,19 @@ func (u *TransactionUsecaseImpl) Transfer(ctx context.Context, tc entity.Transac
 }
 
 func (u *TransactionUsecaseImpl) TransferWithTransactor(ctx context.Context, tc entity.Transaction) (*entity.Transaction, error) {
-	_, err := u.Transactor.WithinTransactor(ctx, func(ctx context.Context) (interface{}, error) {
-		newTc, err := u.Transfer(ctx, tc)
+	var newTc *entity.Transaction
+	var err error
+
+	_, err = u.Transactor.WithinTransactor(ctx, func(ctx context.Context) (interface{}, error) {
+		newTc, err = u.Transfer(ctx, tc)
 		if err != nil {
 			return nil, err
 		}
-		return newTc, nil
+		return nil, nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	return nil, nil
+
+	return newTc, nil
 }

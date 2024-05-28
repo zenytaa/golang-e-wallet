@@ -13,6 +13,7 @@ import (
 type RouterOpt struct {
 	AuthHandler *handler.AuthHandlerImpl
 	UserHandler *handler.UserHandlerImpl
+	Transaction *handler.TransactionHandler
 	UserUsecase usecase.UserUsecase
 }
 
@@ -39,6 +40,7 @@ func NewRouter(routerOpt *RouterOpt) *gin.Engine {
 	{
 		protected.Use(middleware.JwtAuthMiddleware(routerOpt.UserUsecase))
 		protected.GET("/profile", routerOpt.UserHandler.GetProfile)
+		protected.POST("/transfer", routerOpt.Transaction.Transfer)
 	}
 	router.Use()
 

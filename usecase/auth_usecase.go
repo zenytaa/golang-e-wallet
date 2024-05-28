@@ -115,7 +115,7 @@ func (u *AuthUsecaseImpl) Login(ctx context.Context, request dto.AuthLoginReques
 		return nil, apperror.ErrIncorrectCredentials()
 	}
 	if ok {
-		tokenString, err := utils.TokenCreateAndSign(user.Id, os.Getenv("SECRET_KEY"))
+		tokenString, err := utils.TokenCreateAndSign()
 		if err != nil {
 			return nil, apperror.ErrUnauthorized()
 		}
