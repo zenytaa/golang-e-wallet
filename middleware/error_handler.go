@@ -3,7 +3,6 @@ package middleware
 import (
 	"assignment-go-rest-api/apperror"
 	"assignment-go-rest-api/constant"
-	"log"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,7 +16,6 @@ func errorHandler(errType gin.ErrorType) gin.HandlerFunc {
 		ctx.Next()
 		detectedErrors := ctx.Errors.ByType(errType)
 
-		log.Print("App error")
 		if len(detectedErrors) > 0 {
 			err := detectedErrors[0].Err
 			var parsedError *apperror.CustomError

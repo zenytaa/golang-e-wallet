@@ -3,7 +3,7 @@ package app
 import (
 	"assignment-go-rest-api/handler"
 	"assignment-go-rest-api/middleware"
-	"assignment-go-rest-api/usecase"
+	"assignment-go-rest-api/utils"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -14,10 +14,9 @@ type RouterOpt struct {
 	AuthHandler *handler.AuthHandlerImpl
 	UserHandler *handler.UserHandlerImpl
 	Transaction *handler.TransactionHandler
-	UserUsecase usecase.UserUsecase
 }
 
-func NewRouter(routerOpt *RouterOpt) *gin.Engine {
+func NewRouter(routerOpt *RouterOpt, config utils.Config) *gin.Engine {
 	router := gin.Default()
 	router.ContextWithFallback = true
 
@@ -38,7 +37,7 @@ func NewRouter(routerOpt *RouterOpt) *gin.Engine {
 
 	protected := router.Group("/user")
 	{
-		protected.Use(middleware.JwtAuthMiddleware(routerOpt.UserUsecase))
+		protected.Use(middleware.JWTAuthMiddleware(config))
 		protected.GET("/profile", routerOpt.UserHandler.GetProfile)
 		protected.POST("/transfer", routerOpt.Transaction.Transfer)
 	}

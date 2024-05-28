@@ -3,7 +3,6 @@ package utils
 import (
 	"assignment-go-rest-api/apperror"
 	"errors"
-	"os"
 	"strings"
 	"time"
 
@@ -11,21 +10,36 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func TokenCreateAndSign(datas map[string]interface{}) (string, error) {
+type AuthTokenProvider interface {
+	TokenCreateAndSign(datas map[string]interface{}) (string, error)
+	ParseAndVerify(signed string) (jwt.MapClaims, error)
+	IsAuthorized(ctx *gin.Context) (bool, *uint, error)
+	ExtractTokenFromHeader(ctx *gin.Context) (string, error)
+}
+
+type JwtProvider struct {
+	config Config
+}
+
+func NewJwtProvider(config Config) AuthTokenProvider {
+	return &JwtProvider{config: config}
+}
+
+func (j *JwtProvider) TokenCreateAndSign(datas map[string]interface{}) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"data": datas,
-		"iss":  os.Getenv("ISS"),
-		"exp":  time.Now().Add(24 * time.Hour).Unix(),
+		"iss":  j.config.Issuer,
+		"exp":  time.Now().Add(time.Duration(j.config.AccessTokenExp) * time.Hour).Unix(),
 	})
 
-	signed, err := token.SignedString([]byte(os.Getenv("SECRET_KEY")))
+	signed, err := token.SignedString([]byte(j.config.SecretKey))
 	if err != nil {
 		return "", err
 	}
 	return signed, nil
 }
 
-func ParseAndVerify(signed string) (jwt.MapClaims, error) {
+func (j *JwtProvider) ParseAndVerify(signed string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(signed, func(token *jwt.Token) (interface{}, error) {
 		return []byte(j.config.SecretKey), nil
 	}, jwt.WithIssuer(j.config.Issuer),
@@ -46,13 +60,13 @@ func ParseAndVerify(signed string) (jwt.MapClaims, error) {
 	return nil, apperror.ErrUnauthorized()
 }
 
-func IsAuthorized(ctx *gin.Context) (bool, *uint, error) {
-	token, err := ExtractTokenFromHeader(ctx)
+func (j *JwtProvider) IsAuthorized(ctx *gin.Context) (bool, *uint, error) {
+	token, err := j.ExtractTokenFromHeader(ctx)
 	if err != nil {
 		return false, nil, err
 	}
 
-	claims, err := ParseAndVerify(token)
+	claims, err := j.ParseAndVerify(token)
 	if err != nil {
 		return false, nil, err
 	}
@@ -68,7 +82,7 @@ func IsAuthorized(ctx *gin.Context) (bool, *uint, error) {
 	return false, nil, err
 }
 
-func ExtractTokenFromHeader(ctx *gin.Context) (string, error) {
+func (j *JwtProvider) ExtractTokenFromHeader(ctx *gin.Context) (string, error) {
 	bearerToken := ctx.Request.Header.Get("Authorization")
 	if len(strings.Split(bearerToken, " ")) == 2 {
 		return strings.Split(bearerToken, " ")[1], nil

@@ -4,12 +4,13 @@ import (
 	"assignment-go-rest-api/handler"
 	"assignment-go-rest-api/repository"
 	"assignment-go-rest-api/usecase"
+	"assignment-go-rest-api/utils"
 	"database/sql"
 
 	"github.com/gin-gonic/gin"
 )
 
-func createRouter(db *sql.DB) *gin.Engine {
+func createRouter(config utils.Config, db *sql.DB) *gin.Engine {
 	userRepository := repository.NewUserRepository(&repository.UserRepoOpts{Db: db})
 	walletRepository := repository.NewWalletRepository(&repository.WalletRepoOpts{Db: db})
 	passwordResetRepository := repository.NewPasswordResetRepository(db)
@@ -21,10 +22,7 @@ func createRouter(db *sql.DB) *gin.Engine {
 		WalletRepository:        walletRepository,
 		PasswordResetRepository: passwordResetRepository,
 		Transactor:              repository.NewTransactor(db),
-	})
-	userUsecase := usecase.NewUserUsecase(&usecase.UserUsecaseOpts{
-		UserRepository:   userRepository,
-		WalletRepository: walletRepository,
+		AuthTokenProvider:       utils.NewJwtProvider(config),
 	})
 	walletUsecase := usecase.NewWalletUsecase(&usecase.WalletUsecaseOpts{
 		UserRepository:   userRepository,
@@ -45,11 +43,10 @@ func createRouter(db *sql.DB) *gin.Engine {
 		AuthHandler: authHandler,
 		UserHandler: userHandler,
 		Transaction: transactionHandler,
-		UserUsecase: userUsecase,
-	})
+	}, config)
 }
 
-func InitServer(db *sql.DB) *gin.Engine {
-	router := createRouter(db)
+func InitServer(config utils.Config, db *sql.DB) *gin.Engine {
+	router := createRouter(config, db)
 	return router
 }

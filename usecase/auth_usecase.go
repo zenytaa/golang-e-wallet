@@ -20,6 +20,7 @@ type AuthUsecaseOpts struct {
 	WalletRepository        repository.WalletRepository
 	PasswordResetRepository repository.PasswordResetRepository
 	Transactor              repository.Transactor
+	AuthTokenProvider       utils.AuthTokenProvider
 }
 
 type AuthUsecase interface {
@@ -35,6 +36,7 @@ type AuthUsecaseImpl struct {
 	walletRepository        repository.WalletRepository
 	passwordResetRepository repository.PasswordResetRepository
 	transactor              repository.Transactor
+	authTokenProvider       utils.AuthTokenProvider
 }
 
 func NewAuthUsecase(authuOpts *AuthUsecaseOpts) AuthUsecase {
@@ -43,6 +45,7 @@ func NewAuthUsecase(authuOpts *AuthUsecaseOpts) AuthUsecase {
 		walletRepository:        authuOpts.WalletRepository,
 		passwordResetRepository: authuOpts.PasswordResetRepository,
 		transactor:              authuOpts.Transactor,
+		authTokenProvider:       authuOpts.AuthTokenProvider,
 	}
 }
 
@@ -114,8 +117,12 @@ func (u *AuthUsecaseImpl) Login(ctx context.Context, request dto.AuthLoginReques
 	if err != nil {
 		return nil, apperror.ErrIncorrectCredentials()
 	}
+
+	dataTokenMap := make(map[string]interface{})
+	dataTokenMap["id"] = user.Id
+
 	if ok {
-		tokenString, err := utils.TokenCreateAndSign()
+		tokenString, err := u.authTokenProvider.TokenCreateAndSign(dataTokenMap)
 		if err != nil {
 			return nil, apperror.ErrUnauthorized()
 		}
@@ -140,7 +147,11 @@ func (u *AuthUsecaseImpl) ForgotPassword(ctx context.Context, request dto.Forgot
 	}
 
 	passwordReset.UserId = user.Id
-	token, _ := utils.TokenCreateAndSign(user.Id, os.Getenv("SECRET_KEY"))
+
+	dataTokenMap := make(map[string]interface{})
+	dataTokenMap["id"] = user.Id
+
+	token, _ := u.authTokenProvider.TokenCreateAndSign(dataTokenMap)
 	passwordReset.Token = token
 	passwordReset.ExpiredAt = time.Now().Add(1 * time.Hour)
 
