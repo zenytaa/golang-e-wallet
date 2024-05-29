@@ -2,9 +2,6 @@ package dto
 
 import (
 	"assignment-go-rest-api/entity"
-	"time"
-
-	"github.com/shopspring/decimal"
 )
 
 type AuthRegisterResponse struct {
@@ -49,17 +46,6 @@ type ResetPasswordResponse struct {
 	Id     uint   `json:"id"`
 	UserId uint   `json:"user_id"`
 	Email  string `json:"email"`
-}
-
-type ListTransactionResponse struct {
-	Id              uint            `json:"id"`
-	SenderWallet    WalletResponse  `json:"sender_wallet"`
-	RecipientWallet WalletResponse  `json:"recipient_wallet"`
-	Amount          decimal.Decimal `json:"amount"`
-	SourceFundId    uint            `json:"source_of_fund_id"`
-	Description     string          `json:"description"`
-	CreatedAt       time.Time       `json:"created_at"`
-	UpdatedAt       time.Time       `json:"updated_at"`
 }
 
 func ToAuthRegisterResponse(user entity.User, wallet entity.Wallet) *AuthRegisterResponse {

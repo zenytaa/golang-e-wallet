@@ -35,11 +35,13 @@ func NewRouter(routerOpt *RouterOpt, config utils.Config) *gin.Engine {
 	router.POST("/forgot-password", routerOpt.AuthHandler.ForgotPassword)
 	router.POST("/reset-password", routerOpt.AuthHandler.ResetPassword)
 
-	protected := router.Group("/user")
+	protected := router.Group("/users")
 	{
 		protected.Use(middleware.JWTAuthMiddleware(config))
-		protected.GET("/profile", routerOpt.UserHandler.GetProfile)
+		protected.GET("/profiles", routerOpt.UserHandler.GetProfile)
 		protected.POST("/transfer", routerOpt.Transaction.Transfer)
+		protected.POST("/top-up", routerOpt.Transaction.TopUp)
+		protected.GET("/transaction-lists", routerOpt.Transaction.GetListTransaction)
 	}
 	router.Use()
 

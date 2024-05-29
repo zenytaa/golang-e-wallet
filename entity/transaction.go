@@ -8,13 +8,20 @@ import (
 
 type Transaction struct {
 	Id              uint
-	User            User
 	SenderWallet    Wallet
 	RecipientWallet Wallet
 	Amount          decimal.Decimal
-	SourceOfFundId  uint
+	SourceOfFund    SourceOfFund
 	Description     string
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 	DeletedAt       *time.Time
+}
+
+type TransactionParams struct {
+	SortBy  string
+	Sort    string
+	Limit   int
+	Page    int
+	Keyword string
 }

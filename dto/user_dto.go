@@ -11,15 +11,14 @@ type UserRequestParam struct {
 }
 
 type UserDetailResponse struct {
-	UserId       uint                      `json:"user_id"`
-	Email        string                    `json:"email"`
-	Username     string                    `json:"username"`
-	WalletId     uint                      `json:"wallet_id"`
-	WalletNumber string                    `json:"wallet_number"`
-	Balance      decimal.Decimal           `json:"balance"`
-	Transactions []ListTransactionResponse `json:"transactions"`
-	Income       decimal.Decimal           `json:"income"`
-	Expense      decimal.Decimal           `json:"expense"`
+	UserId       uint            `json:"user_id"`
+	Email        string          `json:"email"`
+	Username     string          `json:"username"`
+	WalletId     uint            `json:"wallet_id"`
+	WalletNumber string          `json:"wallet_number"`
+	Balance      decimal.Decimal `json:"balance"`
+	Income       decimal.Decimal `json:"income"`
+	Expense      decimal.Decimal `json:"expense"`
 }
 
 type UserResponse struct {

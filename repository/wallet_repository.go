@@ -41,8 +41,8 @@ func (r *WalletRepositoryImpl) GetByWalletId(ctx context.Context, walletId uint)
 	SELECT w.id, w.user_id, u.username, w.wallet_number, w.balance, w.created_at, w.updated_at, w.deleted_at
 	FROM wallets w
 	JOIN users u ON w.user_id = u.id
-	WHERE deleted_at IS NULL
-	AND id = $1
+	WHERE w.deleted_at IS NULL
+	AND w.id = $1
 	;`
 
 	tx := extractTx(ctx)
@@ -137,8 +137,8 @@ func (r *WalletRepositoryImpl) GetByUserId(ctx context.Context, userId uint) (*e
 	SELECT w.id, w.user_id, u.username, w.wallet_number, w.balance, w.created_at, w.updated_at, w.deleted_at
 	FROM wallets w
 	JOIN users u ON w.user_id = u.id
-	WHERE deleted_at IS NULL
-	AND user_id = $1
+	WHERE w.deleted_at IS NULL
+	AND w.user_id = $1
 	;`
 
 	tx := extractTx(ctx)
@@ -166,8 +166,8 @@ func (r *WalletRepositoryImpl) GetByWalletNumber(ctx context.Context, walletNumb
 	SELECT w.id, w.user_id, u.username, w.wallet_number, w.balance, w.created_at, w.updated_at, w.deleted_at
 	FROM wallets w
 	JOIN users u ON w.user_id = u.id
-	WHERE deleted_at IS NULL
-	AND wallet_number = $1
+	WHERE w.deleted_at IS NULL
+	AND w.wallet_number = $1
 	;`
 
 	tx := extractTx(ctx)

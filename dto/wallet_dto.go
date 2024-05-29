@@ -2,23 +2,19 @@ package dto
 
 import (
 	"assignment-go-rest-api/entity"
-
-	"github.com/shopspring/decimal"
 )
 
 type WalletRequest struct {
 	UserId uint `json:"user_id" binding:"required"`
 }
 type WalletResponse struct {
-	UserName     UserResponse    `json:"user"`
-	WalletNumber string          `json:"wallet_number"`
-	Balance      decimal.Decimal `json:"balance"`
+	UserName     string `json:"username"`
+	WalletNumber string `json:"wallet_number"`
 }
 
 func ToWalletResponse(wallet entity.Wallet) *WalletResponse {
 	return &WalletResponse{
-		UserName:     *ToUserResponse(wallet.User),
+		UserName:     wallet.User.Username,
 		WalletNumber: wallet.WalletNumber,
-		Balance:      wallet.Balance,
 	}
 }
