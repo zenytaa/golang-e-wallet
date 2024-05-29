@@ -41,6 +41,7 @@ func NewRouter(routerOpt *RouterOpt, config utils.Config) *gin.Engine {
 		protected.GET("/profiles", routerOpt.UserHandler.GetProfile)
 		protected.POST("/transfer", routerOpt.Transaction.Transfer)
 		protected.POST("/top-up", routerOpt.Transaction.TopUp)
+		protected.GET("/transaction-lists", routerOpt.Transaction.GetListTransaction)
 	}
 	router.Use()
 

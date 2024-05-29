@@ -17,3 +17,11 @@ type Transaction struct {
 	UpdatedAt       time.Time
 	DeletedAt       *time.Time
 }
+
+type TransactionParams struct {
+	SortBy  string
+	Sort    string
+	Limit   int
+	Page    int
+	Keyword string
+}

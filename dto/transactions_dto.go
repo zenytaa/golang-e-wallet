@@ -2,7 +2,6 @@ package dto
 
 import (
 	"assignment-go-rest-api/entity"
-	"strings"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -39,15 +38,19 @@ type TransferResponse struct {
 	UpdatedAt       time.Time       `json:"updated_at"`
 }
 
-type ListTransactionQuery struct {
-	Sort        string `form:"sort"`
-	SortExist   bool
-	Search      string `form:"search"`
-	SearchExist bool
-	SortBy      string `form:"sort_by"`
-	SortByExist bool
-	Limit       int `form:"limit"`
-	Page        int `form:"page"`
+type TransactionListResponse struct {
+	Id              uint            `json:"id"`
+	Amount          decimal.Decimal `json:"amount"`
+	Description     string          `json:"description"`
+	CreatedAt       time.Time       `json:"created_at"`
+	SenderWallet    WalletResponse  `json:"sender_wallet"`
+	RecipientWallet WalletResponse  `json:"recipient_wallet"`
+	FundName        string          `json:"source_of_fund"`
+}
+
+type TransactionListResponses struct {
+	Pagination       PaginationResponse
+	TransactionsList []TransactionListResponse
 }
 
 func ToTopUpResponse(ts entity.Transaction) *TopUpResponse {
@@ -72,50 +75,30 @@ func ToTransferResponse(ts entity.Transaction) *TransferResponse {
 	}
 }
 
-func ToListTransactionResponse(ts entity.Transaction) *ListTransactionResponse {
-	return &ListTransactionResponse{
-		Id:              ts.Id,
-		SenderWallet:    *ToWalletResponse(ts.SenderWallet),
-		RecipientWallet: *ToWalletResponse(ts.RecipientWallet),
-		Amount:          ts.Amount,
-		SourceFund:      ts.SourceOfFund.FundName,
-		Description:     ts.Description,
-		CreatedAt:       ts.CreatedAt,
-		UpdatedAt:       ts.UpdatedAt,
+func ToTransactionListResponse(tc entity.Transaction) *TransactionListResponse {
+	return &TransactionListResponse{
+		Id:          tc.Id,
+		Amount:      tc.Amount,
+		Description: tc.Description,
+		CreatedAt:   tc.CreatedAt,
+		SenderWallet: WalletResponse{
+			UserName:     tc.SenderWallet.User.Username,
+			WalletNumber: tc.SenderWallet.WalletNumber,
+		},
+		RecipientWallet: WalletResponse{
+			UserName:     tc.RecipientWallet.User.Username,
+			WalletNumber: tc.RecipientWallet.WalletNumber,
+		},
+		FundName: tc.SourceOfFund.FundName,
 	}
 }
 
-func ToListTransactionResponses(trs []entity.Transaction) []ListTransactionResponse {
-	var listResponses []ListTransactionResponse
-	for _, t := range trs {
-		listResponses = append(listResponses, *ToListTransactionResponse(t))
-	}
-	return listResponses
-}
+func ToTransactionListResponses(tcs []entity.Transaction, pagination entity.PaginationInfo) *TransactionListResponses {
+	responses := []TransactionListResponse{}
 
-func ToListTransactionQuery(query *ListTransactionQuery) *ListTransactionQuery {
-	if query.Limit == 0 {
-		query.Limit = 8
-	}
-	if query.Page == 0 {
-		query.Page = 1
+	for _, tc := range tcs {
+		responses = append(responses, *ToTransactionListResponse(tc))
 	}
 
-	query.SortBy = strings.ToLower(query.SortBy)
-	if query.SortBy == "date" {
-		query.SortBy = "updated_at"
-	}
-	if query.SortBy == "amount" {
-		query.SortBy = "updated_at"
-	}
-	if query.SortBy == "to" {
-		query.SortBy = "recipient_wallet_id"
-	}
-
-	query.Sort = strings.ToUpper(query.Sort)
-	if query.Sort != "ASC" {
-		query.Sort = "DESC"
-	}
-
-	return query
+	return &TransactionListResponses{Pagination: *ToPaginationResponse(pagination), TransactionsList: responses}
 }

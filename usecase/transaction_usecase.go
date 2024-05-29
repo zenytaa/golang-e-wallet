@@ -22,6 +22,7 @@ type TransactionUsecase interface {
 	TransferWithTransactor(ctx context.Context, tc entity.Transaction) (*entity.Transaction, error)
 	TopUp(ctx context.Context, tc entity.Transaction) (*entity.Transaction, error)
 	TopUpWithTransactor(ctx context.Context, tc entity.Transaction) (*entity.Transaction, error)
+	GetListTransaction(ctx context.Context, senderId uint, params entity.TransactionParams) ([]entity.Transaction, *entity.PaginationInfo, error)
 }
 
 type TransactionUsecaseImpl struct {
@@ -201,4 +202,25 @@ func (u *TransactionUsecaseImpl) TopUpWithTransactor(ctx context.Context, tc ent
 	}
 
 	return newTc, nil
+}
+
+func (u *TransactionUsecaseImpl) GetListTransaction(ctx context.Context, senderId uint, params entity.TransactionParams) ([]entity.Transaction, *entity.PaginationInfo, error) {
+	tcs, totalData, err := u.TransactionRepository.GetAllByUser(ctx, uint64(senderId), params)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	totalPage := totalData / params.Limit
+	if totalData%params.Limit > 0 {
+		totalPage++
+	}
+
+	pagination := entity.PaginationInfo{
+		Page:      params.Page,
+		Limit:     params.Limit,
+		TotalData: totalData,
+		TotalPage: totalPage,
+	}
+
+	return tcs, &pagination, nil
 }

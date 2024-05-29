@@ -107,3 +107,11 @@ func ErrTransactionNotFound() error {
 func ErrTokenExpired() error {
 	return NewCustomError(http.StatusUnauthorized, constant.ResponseMsgErrorTokenExpired)
 }
+
+func ErrInvalidIntegerInput() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgInvalidIntInput)
+}
+
+func ErrInvalidZeroLimitInput() error {
+	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgInvalidZeroLimitInput)
+}

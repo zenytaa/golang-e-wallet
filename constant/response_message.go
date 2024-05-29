@@ -42,4 +42,6 @@ const (
 	ResponseMsgGetProfileSuccsess        = "successfully get profile"
 	ResponseMsgTransactionNotFound       = "transaction not found"
 	ResponseMsgErrorTokenExpired         = "token already expired"
+	ResponseMsgInvalidIntInput           = "invalid integer input"
+	ResponseMsgInvalidZeroLimitInput     = "limit should be more tham 0"
 )
