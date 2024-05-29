@@ -62,3 +62,41 @@ func (h *TransactionHandler) Transfer(ctx *gin.Context) {
 		Data:    dto.ToTransferResponse(*transaferResponse),
 	})
 }
+
+func (h *TransactionHandler) TopUp(ctx *gin.Context) {
+	var payload dto.TopUpCreateRequest
+
+	if err := ctx.ShouldBindJSON(&payload); err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	dataUserId, err := utils.GetDataFromContext(ctx)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	tc := entity.Transaction{
+		SenderWallet: entity.Wallet{
+			User: entity.User{Id: *dataUserId},
+		},
+		RecipientWallet: entity.Wallet{
+			User: entity.User{Id: *dataUserId},
+		},
+		Amount:       payload.Amount,
+		SourceOfFund: entity.SourceOfFund{Id: payload.SourceFundId},
+	}
+
+	topUpResponse, err := h.TransactionUsecase.TopUp(ctx, tc)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, dto.WebResponse{
+		Code:    http.StatusOK,
+		Message: constant.ResponseMsgTopUpSucces,
+		Data:    dto.ToTopUpResponse(*topUpResponse),
+	})
+}

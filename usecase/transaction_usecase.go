@@ -6,6 +6,7 @@ import (
 	"assignment-go-rest-api/entity"
 	"assignment-go-rest-api/repository"
 	"context"
+	"fmt"
 
 	"github.com/shopspring/decimal"
 )
@@ -20,6 +21,7 @@ type TransactionUsecaseOpts struct {
 type TransactionUsecase interface {
 	Transfer(ctx context.Context, tc entity.Transaction) (*entity.Transaction, error)
 	TransferWithTransactor(ctx context.Context, tc entity.Transaction) (*entity.Transaction, error)
+	TopUp(ctx context.Context, tc entity.Transaction) (*entity.Transaction, error)
 }
 
 type TransactionUsecaseImpl struct {
@@ -135,4 +137,46 @@ func (u *TransactionUsecaseImpl) TransferWithTransactor(ctx context.Context, tc 
 	}
 
 	return newTc, nil
+}
+
+func (u *TransactionUsecaseImpl) TopUp(ctx context.Context, tc entity.Transaction) (*entity.Transaction, error) {
+	if tc.Amount.IntPart() < int64(constant.MinTopUp) || tc.Amount.IntPart() > int64(constant.MaxTopUp) {
+		return nil, apperror.ErrLimitTopUp()
+	}
+
+	sourceFund, err := u.SourceFundRepository.GetById(ctx, tc.SourceOfFund.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	wallet, err := u.WalletRepository.GetByUserId(ctx, tc.SenderWallet.User.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := u.TransactionRepository.CreateOne(ctx, entity.Transaction{
+		Amount:       tc.Amount,
+		SourceOfFund: *sourceFund,
+		Description:  fmt.Sprint("transfered from ", sourceFund.FundName),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	wallet.Balance = wallet.Balance.Add(tc.Amount)
+	_, err = u.WalletRepository.Update(ctx, wallet)
+	if err != nil {
+		return nil, err
+	}
+
+	tcResponse := entity.Transaction{
+		Id:              res.Id,
+		SenderWallet:    *wallet,
+		RecipientWallet: *wallet,
+		Amount:          tc.Amount,
+		SourceOfFund:    *sourceFund,
+		Description:     tc.Description,
+	}
+
+	return &tcResponse, nil
 }

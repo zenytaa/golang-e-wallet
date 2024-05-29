@@ -11,17 +11,14 @@ import (
 type TopUpCreateRequest struct {
 	Amount       decimal.Decimal `json:"amount" binding:"required"`
 	SourceFundId uint            `json:"source_of_fund_id" binding:"required"`
-	UserId       uint
 }
 
 type TopUpResponse struct {
-	Id              uint            `json:"id"`
-	SenderWallet    WalletResponse  `json:"sender_wallet"`
-	RecipientWallet WalletResponse  `json:"recipient_wallet"`
-	Amount          decimal.Decimal `json:"amount"`
-	SourceOfFund    string          `json:"source_of_fund"`
-	Description     string          `json:"description"`
-	CreatedAt       time.Time       `json:"created_at"`
+	Id           uint            `json:"id"`
+	Amount       decimal.Decimal `json:"amount"`
+	SourceOfFund string          `json:"source_of_fund"`
+	Description  string          `json:"description"`
+	CreatedAt    time.Time       `json:"created_at"`
 }
 
 type TransferCreateRequest struct {
@@ -55,13 +52,11 @@ type ListTransactionQuery struct {
 
 func ToTopUpResponse(ts entity.Transaction) *TopUpResponse {
 	return &TopUpResponse{
-		Id:              ts.Id,
-		SenderWallet:    *ToWalletResponse(ts.SenderWallet),
-		RecipientWallet: *ToWalletResponse(ts.RecipientWallet),
-		Amount:          ts.Amount,
-		SourceOfFund:    ts.SourceOfFund.FundName,
-		Description:     ts.Description,
-		CreatedAt:       ts.CreatedAt,
+		Id:           ts.Id,
+		Amount:       ts.Amount,
+		SourceOfFund: ts.SourceOfFund.FundName,
+		Description:  ts.Description,
+		CreatedAt:    ts.CreatedAt,
 	}
 }
 

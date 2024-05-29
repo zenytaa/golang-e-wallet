@@ -17,7 +17,6 @@ type TransactionRepoOpts struct {
 
 type TransactionRepository interface {
 	CreateOne(ctx context.Context, tc entity.Transaction) (*entity.Transaction, error)
-	// GetOneById(ctx context.Context, id uint) (*entity.Transaction, error)
 }
 
 type TransactionRepositoryImpl struct {
@@ -60,20 +59,3 @@ func (r *TransactionRepositoryImpl) CreateOne(ctx context.Context, tc entity.Tra
 
 	return &newTc, nil
 }
-
-// func (r *TransactionRepositoryImpl) GetOneById(ctx context.Context, id uint) (*entity.Transaction, error) {
-// 	var newTc *entity.Transaction
-// 	var err error
-
-// 	SQL = `
-// 		SELECT t.id, ws.wallet_number, us.username, wr.wallet_number, ur.username, t.amount, t.source_of_fund_id, t.description
-// 		FROM transactions t
-// 		JOIN wallets ws ON t.sender_wallet_id = ws.id
-// 		JOIN users us ON ws.user_id = us.id
-// 		JOIN wallets wr ON t.recipient_wallet_id = wr.id
-// 		JOIN users ur ON wr.user_id = ur.id
-// 		WHERE t.deleted_at IS NULL
-// 		AND t.id =
-// 	`
-
-// }

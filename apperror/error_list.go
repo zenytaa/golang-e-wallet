@@ -103,3 +103,7 @@ func ErrLimitTransfer() error {
 func ErrTransactionNotFound() error {
 	return NewCustomError(http.StatusBadRequest, constant.ResponseMsgTransactionNotFound)
 }
+
+func ErrTokenExpired() error {
+	return NewCustomError(http.StatusUnauthorized, constant.ResponseMsgErrorTokenExpired)
+}

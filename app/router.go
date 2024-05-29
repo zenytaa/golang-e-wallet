@@ -40,6 +40,7 @@ func NewRouter(routerOpt *RouterOpt, config utils.Config) *gin.Engine {
 		protected.Use(middleware.JWTAuthMiddleware(config))
 		protected.GET("/profiles", routerOpt.UserHandler.GetProfile)
 		protected.POST("/transfer", routerOpt.Transaction.Transfer)
+		protected.POST("/top-up", routerOpt.Transaction.TopUp)
 	}
 	router.Use()
 

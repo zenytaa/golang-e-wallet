@@ -12,11 +12,11 @@ func JWTAuthMiddleware(config utils.Config) func(*gin.Context) {
 	return func(ctx *gin.Context) {
 		authorized, data, err := utils.NewJwtProvider(config).IsAuthorized(ctx)
 		if !authorized && err != nil && data == nil {
-			if err.Error() == "token already expired" {
-				ctx.AbortWithStatusJSON(http.StatusForbidden, apperror.ErrForbidden())
+			if err.Error() == "token expired" {
+				ctx.AbortWithStatusJSON(http.StatusUnauthorized, apperror.ErrTokenExpired())
 				return
 			}
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, apperror.ErrForbidden())
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, apperror.ErrUnauthorized())
 			return
 		}
 		ctx.Set("data", data)

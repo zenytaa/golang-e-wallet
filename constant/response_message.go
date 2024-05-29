@@ -41,4 +41,5 @@ const (
 	ResponseMsgResetPasswordFailed       = "failed to reset password"
 	ResponseMsgGetProfileSuccsess        = "successfully get profile"
 	ResponseMsgTransactionNotFound       = "transaction not found"
+	ResponseMsgErrorTokenExpired         = "token already expired"
 )
