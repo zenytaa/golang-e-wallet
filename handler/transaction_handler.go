@@ -88,7 +88,7 @@ func (h *TransactionHandler) TopUp(ctx *gin.Context) {
 		SourceOfFund: entity.SourceOfFund{Id: payload.SourceFundId},
 	}
 
-	topUpResponse, err := h.TransactionUsecase.TopUp(ctx, tc)
+	topUpResponse, err := h.TransactionUsecase.TopUpWithTransactor(ctx, tc)
 	if err != nil {
 		ctx.Error(err)
 		return

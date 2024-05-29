@@ -6,7 +6,6 @@ import (
 	"assignment-go-rest-api/entity"
 	"assignment-go-rest-api/repository"
 	"context"
-	"fmt"
 
 	"github.com/shopspring/decimal"
 )
@@ -22,6 +21,7 @@ type TransactionUsecase interface {
 	Transfer(ctx context.Context, tc entity.Transaction) (*entity.Transaction, error)
 	TransferWithTransactor(ctx context.Context, tc entity.Transaction) (*entity.Transaction, error)
 	TopUp(ctx context.Context, tc entity.Transaction) (*entity.Transaction, error)
+	TopUpWithTransactor(ctx context.Context, tc entity.Transaction) (*entity.Transaction, error)
 }
 
 type TransactionUsecaseImpl struct {
@@ -155,9 +155,12 @@ func (u *TransactionUsecaseImpl) TopUp(ctx context.Context, tc entity.Transactio
 	}
 
 	res, err := u.TransactionRepository.CreateOne(ctx, entity.Transaction{
-		Amount:       tc.Amount,
-		SourceOfFund: *sourceFund,
-		Description:  fmt.Sprint("transfered from ", sourceFund.FundName),
+		Id:              0,
+		SenderWallet:    *wallet,
+		RecipientWallet: *wallet,
+		Amount:          tc.Amount,
+		SourceOfFund:    *sourceFund,
+		Description:     `top up from ` + sourceFund.FundName,
 	})
 	if err != nil {
 		return nil, err
@@ -175,8 +178,27 @@ func (u *TransactionUsecaseImpl) TopUp(ctx context.Context, tc entity.Transactio
 		RecipientWallet: *wallet,
 		Amount:          tc.Amount,
 		SourceOfFund:    *sourceFund,
-		Description:     tc.Description,
+		Description:     res.Description,
 	}
 
 	return &tcResponse, nil
+}
+
+func (u *TransactionUsecaseImpl) TopUpWithTransactor(ctx context.Context, tc entity.Transaction) (*entity.Transaction, error) {
+	var newTc *entity.Transaction
+	var err error
+
+	_, err = u.Transactor.WithinTransactor(ctx, func(ctx context.Context) (interface{}, error) {
+		res, err := u.TopUp(ctx, tc)
+		if err != nil {
+			return nil, err
+		}
+		newTc = res
+		return res, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return newTc, nil
 }

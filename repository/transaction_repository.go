@@ -40,14 +40,14 @@ func (r *TransactionRepositoryImpl) CreateOne(ctx context.Context, tc entity.Tra
 	SQL := `
 		INSERT INTO transactions
 		(sender_wallet_id, recipient_wallet_id, amount, source_of_fund_id, description)
-		VALUES ($1, $2, $3, $4, $5) RETURNING id;
+		VALUES ($1, $2, $3, $4, $5) RETURNING id, description;
 	`
 
 	tx := extractTx(ctx)
 	if tx != nil {
-		err = tx.QueryRowContext(ctx, SQL, values...).Scan(&newTc.Id)
+		err = tx.QueryRowContext(ctx, SQL, values...).Scan(&newTc.Id, &newTc.Description)
 	} else {
-		err = r.Db.QueryRowContext(ctx, SQL, values...).Scan(&newTc.Id)
+		err = r.Db.QueryRowContext(ctx, SQL, values...).Scan(&newTc.Id, &newTc.Description)
 	}
 
 	if err != nil {
