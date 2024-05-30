@@ -18,6 +18,7 @@ type Config struct {
 	HashCost       int
 	Issuer         string
 	AccessTokenExp int
+	ResetTokenExp  int
 }
 
 func ConfigInit() (Config, error) {
@@ -36,6 +37,11 @@ func ConfigInit() (Config, error) {
 		return Config{}, err
 	}
 
+	resetTokenExp, err := strconv.Atoi(env["RESET_TOKEN_EXP"])
+	if err != nil {
+		return Config{}, err
+	}
+
 	return Config{
 		DbHost:         env["DB_HOST"],
 		DbUser:         env["DB_USER"],
@@ -48,5 +54,6 @@ func ConfigInit() (Config, error) {
 		HashCost:       hashCost,
 		Issuer:         env["ISS"],
 		AccessTokenExp: accTokenExp,
+		ResetTokenExp:  resetTokenExp,
 	}, nil
 }

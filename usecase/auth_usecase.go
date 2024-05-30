@@ -7,52 +7,41 @@ import (
 	"assignment-go-rest-api/repository"
 	"assignment-go-rest-api/utils"
 	"context"
-	"errors"
-	"os"
-	"strconv"
-	"time"
 
 	"github.com/shopspring/decimal"
 )
 
 type AuthUsecaseOpts struct {
-	UserRepository          repository.UserRepository
-	WalletRepository        repository.WalletRepository
-	PasswordResetRepository repository.PasswordResetRepository
-	Transactor              repository.Transactor
-	AuthTokenProvider       utils.AuthTokenProvider
+	UserRepository    repository.UserRepository
+	WalletRepository  repository.WalletRepository
+	Transactor        repository.Transactor
+	AuthTokenProvider utils.AuthTokenProvider
 }
 
 type AuthUsecase interface {
 	Register(ctx context.Context, request dto.AuthRegisterRequest) error
 	RegisterWithInTransactor(ctx context.Context, request dto.AuthRegisterRequest) error
 	Login(ctx context.Context, request dto.AuthLoginRequest) (*string, error)
-	ForgotPassword(ctx context.Context, request dto.ForgotPasswordRequest) (*dto.ForgotPasswordResponse, error)
-	ResetPassword(ctx context.Context, request dto.ResetPasswordRequest) (*dto.ResetPasswordResponse, error)
 }
 
 type AuthUsecaseImpl struct {
-	userRepository          repository.UserRepository
-	walletRepository        repository.WalletRepository
-	passwordResetRepository repository.PasswordResetRepository
-	transactor              repository.Transactor
-	authTokenProvider       utils.AuthTokenProvider
+	userRepository    repository.UserRepository
+	walletRepository  repository.WalletRepository
+	transactor        repository.Transactor
+	authTokenProvider utils.AuthTokenProvider
 }
 
 func NewAuthUsecase(authuOpts *AuthUsecaseOpts) AuthUsecase {
 	return &AuthUsecaseImpl{
-		userRepository:          authuOpts.UserRepository,
-		walletRepository:        authuOpts.WalletRepository,
-		passwordResetRepository: authuOpts.PasswordResetRepository,
-		transactor:              authuOpts.Transactor,
-		authTokenProvider:       authuOpts.AuthTokenProvider,
+		userRepository:    authuOpts.UserRepository,
+		walletRepository:  authuOpts.WalletRepository,
+		transactor:        authuOpts.Transactor,
+		authTokenProvider: authuOpts.AuthTokenProvider,
 	}
 }
 
 func (u *AuthUsecaseImpl) Register(ctx context.Context, request dto.AuthRegisterRequest) error {
-	hashCostString := os.Getenv("HASH_COST")
-	hashCost, _ := strconv.Atoi(hashCostString)
-	hashPassword, err := utils.HashPassword(request.Password, hashCost)
+	hashPassword, err := utils.HashPassword(request.Password)
 	if err != nil {
 		return err
 	}
@@ -130,76 +119,4 @@ func (u *AuthUsecaseImpl) Login(ctx context.Context, request dto.AuthLoginReques
 	}
 
 	return nil, apperror.ErrInternalServer()
-}
-
-func (u *AuthUsecaseImpl) ForgotPassword(ctx context.Context, request dto.ForgotPasswordRequest) (*dto.ForgotPasswordResponse, error) {
-	user, err := u.userRepository.GetByEmail(ctx, request.Email)
-	if err != nil {
-		return nil, apperror.ErrInternalServer()
-	}
-	if user.Id == 0 {
-		return nil, apperror.ErrUserNotFound()
-	}
-
-	passwordReset, err := u.passwordResetRepository.GetByUserId(ctx, user.Id)
-	if err != nil {
-		return nil, apperror.ErrInternalServer()
-	}
-
-	passwordReset.UserId = user.Id
-
-	dataTokenMap := make(map[string]interface{})
-	dataTokenMap["id"] = user.Id
-
-	token, _ := u.authTokenProvider.TokenCreateAndSign(dataTokenMap)
-	passwordReset.Token = token
-	passwordReset.ExpiredAt = time.Now().Add(1 * time.Hour)
-
-	passwordReset, err = u.passwordResetRepository.Save(ctx, passwordReset)
-	if err != nil {
-		return nil, apperror.ErrInternalServer()
-	}
-
-	return dto.ToForgotPasswordResponse(*user, *passwordReset), nil
-}
-
-func (u *AuthUsecaseImpl) ResetPassword(ctx context.Context, request dto.ResetPasswordRequest) (*dto.ResetPasswordResponse, error) {
-	passwordReset, err := u.passwordResetRepository.GetByToken(ctx, request.Token)
-	if err != nil {
-		return nil, apperror.ErrInternalServer()
-	}
-
-	if passwordReset.UserId == 0 {
-		return nil, apperror.ErrResetTokenNotFound()
-	}
-	if request.Password != request.ConfirmPassword {
-		return nil, apperror.ErrPasswordNotMatch()
-	}
-
-	hashCostInt, _ := strconv.Atoi(os.Getenv("HASH_COST"))
-	passwordHash, err := utils.HashPassword(request.Password, hashCostInt)
-	if err != nil {
-		return nil, errors.New("failed to hash password")
-	}
-
-	user, err := u.userRepository.GetById(ctx, passwordReset.UserId)
-	if err != nil {
-		return nil, apperror.ErrInternalServer()
-	}
-	if user.Id == 0 {
-		return nil, apperror.ErrUserNotFound()
-	}
-	user.Password = string(passwordHash)
-
-	_, err = u.userRepository.Update(ctx, user)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = u.passwordResetRepository.SoftDelete(ctx, passwordReset)
-	if err != nil {
-		return nil, err
-	}
-
-	return dto.ToResetPasswordResponse(*user, *passwordReset), nil
 }
