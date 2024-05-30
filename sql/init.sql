@@ -17,7 +17,7 @@ CREATE TABlE users(
 
 CREATE TABlE wallets(
     id BIGSERIAL PRIMARY KEY,
-    user_id INT NOT NULL REFERENCES users(id),
+    user_id BIGINT NOT NULL REFERENCES users(id),
     wallet_number CHAR(13) UNIQUE NOT NULL,
     balance DECIMAL NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -27,7 +27,7 @@ CREATE TABlE wallets(
 
 CREATE TABLE password_resets(
     id BIGSERIAL PRIMARY KEY,
-    user_id INT NOT NULL REFERENCES users(id),
+    user_id BIGINT NOT NULL REFERENCES users(id),
     token VARCHAR NOT NULL,
     expired_at TIMESTAMP NOT NULL DEFAULT NOW()+INTERVAL'10 minutes',
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -41,24 +41,35 @@ CREATE TABLE source_of_funds(
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMP
-
 );
 
-CREATE TABLE transactions(
-    id BIGSERIAL PRIMARY KEY,
-    sender_wallet_id INT NOT NULL REFERENCES wallets(id),
-    recipient_wallet_id INT NOT NULL REFERENCES wallets(id),
-    amount DECIMAL NOT NULL CHECK(amount > 0),
-    source_of_fund_id INT NOT NULL REFERENCES source_of_funds(id),
-    description TEXT NOT NULL,
+CREATE TABLE transaction_types (
+    id BIGSERIAL PRIMARY KEY, 
+    name VARCHAR,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMP
 );
 
-INSERT INTO source_of_funds(id, fund_name, created_at, updated_at)
-VALUES 
-(1, 'Bank Transfer', NOW(), NOW()), 
-(2, 'Credit Card', NOW(), NOW()), 
-(3, 'Cash', NOW(), NOW()), 
-(4, 'Reward', NOW(), NOW());
+CREATE TABLE transactions(
+    id BIGSERIAL PRIMARY KEY,
+    amount DECIMAL NOT NULL CHECK(amount > 0),
+    description TEXT NOT NULL,
+    sender_wallet_id BIGINT NOT NULL REFERENCES wallets(id),
+    recipient_wallet_id BIGINT NOT NULL REFERENCES wallets(id),
+    source_of_fund_id BIGINT NOT NULL REFERENCES source_of_funds(id),
+    transaction_type_id BIGINT NOT NULL REFERENCES transaction_types(id),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMP
+);
+
+INSERT INTO transaction_types(name) VALUES
+('Transfer'),
+('Top-Up');
+
+INSERT INTO source_of_funds(fund_name) VALUES 
+('Bank Transfer'), 
+('Credit Card'), 
+('Cash'), 
+('Reward');

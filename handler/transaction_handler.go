@@ -47,9 +47,10 @@ func (h *TransactionHandler) Transfer(ctx *gin.Context) {
 			User:         entity.User{},
 			WalletNumber: payload.RecipientWalletNumber,
 		},
-		Amount:       payload.Amount,
-		SourceOfFund: entity.SourceOfFund{Id: payload.SourceFundId},
-		Description:  payload.Description,
+		Amount:          payload.Amount,
+		SourceOfFund:    entity.SourceOfFund{Id: payload.SourceFundId},
+		Description:     payload.Description,
+		TransactionType: entity.TransactionTypes{Id: constant.TransferTypeId, Name: constant.TransferTypeName},
 	}
 
 	transaferResponse, err := h.TransactionUsecase.TransferWithTransactor(ctx, tc)
@@ -86,8 +87,9 @@ func (h *TransactionHandler) TopUp(ctx *gin.Context) {
 		RecipientWallet: entity.Wallet{
 			User: entity.User{Id: *dataUserId},
 		},
-		Amount:       payload.Amount,
-		SourceOfFund: entity.SourceOfFund{Id: payload.SourceFundId},
+		Amount:          payload.Amount,
+		SourceOfFund:    entity.SourceOfFund{Id: payload.SourceFundId},
+		TransactionType: entity.TransactionTypes{Id: constant.TopUpTypeId},
 	}
 
 	topUpResponse, err := h.TransactionUsecase.TopUpWithTransactor(ctx, tc)

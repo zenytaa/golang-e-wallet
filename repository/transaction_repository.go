@@ -39,11 +39,12 @@ func (r *TransactionRepositoryImpl) CreateOne(ctx context.Context, tc entity.Tra
 	values = append(values, tc.Amount)
 	values = append(values, tc.SourceOfFund.Id)
 	values = append(values, tc.Description)
+	values = append(values, tc.TransactionType.Id)
 
 	SQL := `
 		INSERT INTO transactions
-		(sender_wallet_id, recipient_wallet_id, amount, source_of_fund_id, description)
-		VALUES ($1, $2, $3, $4, $5) RETURNING id, description;
+		(sender_wallet_id, recipient_wallet_id, amount, source_of_fund_id, description, transaction_type_id)
+		VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, description;
 	`
 
 	tx := extractTx(ctx)
@@ -73,7 +74,8 @@ func (r *TransactionRepositoryImpl) GetAllByUser(ctx context.Context, senderId u
 		, t.id, t.amount, t.description, t.created_at, 
 		sw.id, sw.wallet_number, ss.id, ss.username, 
 		rw.id, rw.wallet_number, rs.id, rs.username,
-		sf.id, sf.fund_name 
+		sf.id, sf.fund_name,
+		tt.id, tt.name
 	`
 	sqlGetAllCommand := `
 		FROM transactions t
@@ -82,6 +84,7 @@ func (r *TransactionRepositoryImpl) GetAllByUser(ctx context.Context, senderId u
 		JOIN wallets rw ON t.recipient_wallet_id = rw.id
 		JOIN users rs ON rw.user_id = rs.id
 		JOIN source_of_funds sf ON t.source_of_fund_id = sf.id
+		JOIN transaction_types tt ON t.transaction_type_id = tt.id
 		WHERE t.deleted_at IS NULL AND ss.id = $1 or rs.id = $1
 	`
 
@@ -114,7 +117,7 @@ func (r *TransactionRepositoryImpl) GetAllByUser(ctx context.Context, senderId u
 	var sortBy string
 	switch params.SortBy {
 	case "amount":
-		sortBy = `t.name `
+		sortBy = `t.amount `
 	default:
 		sortBy = `t.created_at `
 	}
@@ -122,7 +125,7 @@ func (r *TransactionRepositoryImpl) GetAllByUser(ctx context.Context, senderId u
 	sbTotalRows.WriteString(fmt.Sprintf(`ORDER BY %s `, sortBy))
 
 	if params.Sort == "" {
-		params.Sort = `ASC `
+		params.Sort = `DESC `
 	}
 	sb.WriteString(fmt.Sprintf(`%s `, params.Sort))
 	sbTotalRows.WriteString(fmt.Sprintf(`%s `, params.Sort))
@@ -155,6 +158,7 @@ func (r *TransactionRepositoryImpl) GetAllByUser(ctx context.Context, senderId u
 			&tc.SenderWallet.User.Id, &tc.SenderWallet.User.Username,
 			&tc.RecipientWallet.Id, &tc.RecipientWallet.WalletNumber, &tc.RecipientWallet.User.Id, &tc.RecipientWallet.User.Username,
 			&tc.SourceOfFund.Id, &tc.SourceOfFund.FundName,
+			&tc.TransactionType.Id, &tc.TransactionType.Name,
 		)
 		if err != nil {
 			if err == sql.ErrNoRows {

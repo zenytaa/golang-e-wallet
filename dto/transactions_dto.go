@@ -34,8 +34,8 @@ type TransferResponse struct {
 	Amount          decimal.Decimal `json:"amount"`
 	SourceFund      string          `json:"source_of_fund"`
 	Description     string          `json:"description"`
+	TransactionType string          `json:"transaction_type"`
 	CreatedAt       time.Time       `json:"created_at"`
-	UpdatedAt       time.Time       `json:"updated_at"`
 }
 
 type TransactionListResponse struct {
@@ -46,6 +46,7 @@ type TransactionListResponse struct {
 	SenderWallet    WalletResponse  `json:"sender_wallet"`
 	RecipientWallet WalletResponse  `json:"recipient_wallet"`
 	FundName        string          `json:"source_of_fund"`
+	TransactionType string          `json:"transaction_type"`
 }
 
 type TransactionListResponses struct {
@@ -71,6 +72,7 @@ func ToTransferResponse(ts entity.Transaction) *TransferResponse {
 		Amount:          ts.Amount,
 		SourceFund:      ts.SourceOfFund.FundName,
 		Description:     ts.Description,
+		TransactionType: ts.TransactionType.Name,
 		CreatedAt:       ts.CreatedAt,
 	}
 }
@@ -89,7 +91,8 @@ func ToTransactionListResponse(tc entity.Transaction) *TransactionListResponse {
 			UserName:     tc.RecipientWallet.User.Username,
 			WalletNumber: tc.RecipientWallet.WalletNumber,
 		},
-		FundName: tc.SourceOfFund.FundName,
+		FundName:        tc.SourceOfFund.FundName,
+		TransactionType: tc.TransactionType.Name,
 	}
 }
 

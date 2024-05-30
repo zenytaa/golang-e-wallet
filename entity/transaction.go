@@ -8,11 +8,12 @@ import (
 
 type Transaction struct {
 	Id              uint
+	Amount          decimal.Decimal
+	Description     string
 	SenderWallet    Wallet
 	RecipientWallet Wallet
-	Amount          decimal.Decimal
 	SourceOfFund    SourceOfFund
-	Description     string
+	TransactionType TransactionTypes
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 	DeletedAt       *time.Time
