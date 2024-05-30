@@ -32,20 +32,12 @@ type ForgotPasswordRequest struct {
 }
 
 type ForgotPasswordResponse struct {
-	Email string `json:"email"`
 	Token string `json:"token"`
 }
 
 type ResetPasswordRequest struct {
-	Token           string `json:"token" binding:"required"`
-	Password        string `json:"new_password" binding:"required,gte=8"`
-	ConfirmPassword string `json:"confirm_password" binding:"required,gte=8"`
-}
-
-type ResetPasswordResponse struct {
-	Id     uint   `json:"id"`
-	UserId uint   `json:"user_id"`
-	Email  string `json:"email"`
+	Token    string `json:"token" binding:"required"`
+	Password string `json:"new_password" binding:"required,gte=8"`
 }
 
 func ToAuthRegisterResponse(user entity.User, wallet entity.Wallet) *AuthRegisterResponse {
@@ -57,17 +49,8 @@ func ToAuthRegisterResponse(user entity.User, wallet entity.Wallet) *AuthRegiste
 	}
 }
 
-func ToForgotPasswordResponse(user entity.User, pwdReset entity.PasswordReset) *ForgotPasswordResponse {
+func ToForgotPasswordResponse(pwdReset entity.PasswordReset) *ForgotPasswordResponse {
 	return &ForgotPasswordResponse{
-		Email: user.Email,
 		Token: pwdReset.Token,
-	}
-}
-
-func ToResetPasswordResponse(user entity.User, pwdReset entity.PasswordReset) *ResetPasswordResponse {
-	return &ResetPasswordResponse{
-		Id:     pwdReset.Id,
-		UserId: user.Id,
-		Email:  user.Email,
 	}
 }

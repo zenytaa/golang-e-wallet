@@ -11,9 +11,10 @@ import (
 )
 
 type RouterOpt struct {
-	AuthHandler *handler.AuthHandlerImpl
-	UserHandler *handler.UserHandlerImpl
-	Transaction *handler.TransactionHandler
+	AuthHandler   *handler.AuthHandler
+	UserHandler   *handler.UserHandlerImpl
+	Transaction   *handler.TransactionHandler
+	PasswordReset *handler.PasswordResetHandler
 }
 
 func NewRouter(routerOpt *RouterOpt, config utils.Config) *gin.Engine {
@@ -32,8 +33,6 @@ func NewRouter(routerOpt *RouterOpt, config utils.Config) *gin.Engine {
 
 	router.POST("/register", routerOpt.AuthHandler.Register)
 	router.POST("/login", routerOpt.AuthHandler.Login)
-	router.POST("/forgot-password", routerOpt.AuthHandler.ForgotPassword)
-	router.POST("/reset-password", routerOpt.AuthHandler.ResetPassword)
 
 	protected := router.Group("/users")
 	{
@@ -42,6 +41,8 @@ func NewRouter(routerOpt *RouterOpt, config utils.Config) *gin.Engine {
 		protected.POST("/transfer", routerOpt.Transaction.Transfer)
 		protected.POST("/top-up", routerOpt.Transaction.TopUp)
 		protected.GET("/transaction-lists", routerOpt.Transaction.GetListTransaction)
+		protected.POST("/forgot-password", routerOpt.PasswordReset.ForgotPassword)
+		protected.POST("/reset-password", routerOpt.PasswordReset.PasswordReset)
 	}
 	router.Use()
 
