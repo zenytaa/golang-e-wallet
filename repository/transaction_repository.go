@@ -117,7 +117,7 @@ func (r *TransactionRepositoryImpl) GetAllByUser(ctx context.Context, senderId u
 	var sortBy string
 	switch params.SortBy {
 	case "amount":
-		sortBy = `t.name `
+		sortBy = `t.amount `
 	default:
 		sortBy = `t.created_at `
 	}
