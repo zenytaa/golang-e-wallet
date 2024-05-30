@@ -75,6 +75,7 @@ func (u *TransactionUsecaseImpl) Transfer(ctx context.Context, tc entity.Transac
 		Amount:          tc.Amount,
 		SourceOfFund:    tc.SourceOfFund,
 		Description:     tc.Description,
+		TransactionType: tc.TransactionType,
 	})
 
 	if err != nil {
@@ -87,6 +88,7 @@ func (u *TransactionUsecaseImpl) Transfer(ctx context.Context, tc entity.Transac
 		Amount:          tc.Amount,
 		SourceOfFund:    tc.SourceOfFund,
 		Description:     tc.Description,
+		TransactionType: tc.TransactionType,
 	})
 	if err != nil {
 		return nil, err
@@ -113,6 +115,7 @@ func (u *TransactionUsecaseImpl) Transfer(ctx context.Context, tc entity.Transac
 		Amount:          tc.Amount,
 		SourceOfFund:    *sourceFund,
 		Description:     tc.Description,
+		TransactionType: tc.TransactionType,
 	}
 
 	tcResponse.SenderWallet.Balance = decimal.NewFromInt(0)
@@ -162,6 +165,7 @@ func (u *TransactionUsecaseImpl) TopUp(ctx context.Context, tc entity.Transactio
 		Amount:          tc.Amount,
 		SourceOfFund:    *sourceFund,
 		Description:     `top up from ` + sourceFund.FundName,
+		TransactionType: tc.TransactionType,
 	})
 	if err != nil {
 		return nil, err
