@@ -19,7 +19,7 @@ type AuthLoginResponse struct {
 type AuthRegisterRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required,min=8"`
+	Password string `json:"password" binding:"required,excludes= ,containsany=abcdefghijklmnopqrstuvwxyz,containsany=ABCDEFGHIJKLMNOPQRSTUVWXYZ,containsany=1234567890,containsany=!#$%&'()*+0x2C-./:\"\\;<=>?@[]^_{0x7C}~,min=8,max=128"`
 }
 
 type AuthLoginRequest struct {
@@ -37,7 +37,7 @@ type ForgotPasswordResponse struct {
 
 type ResetPasswordRequest struct {
 	Token    string `json:"token" binding:"required"`
-	Password string `json:"new_password" binding:"required,gte=8"`
+	Password string `json:"new_password" binding:"required,excludes= ,containsany=abcdefghijklmnopqrstuvwxyz,containsany=ABCDEFGHIJKLMNOPQRSTUVWXYZ,containsany=1234567890,containsany=!#$%&'()*+0x2C-./:\"\\;<=>?@[]^_{0x7C}~,min=8,max=128"`
 }
 
 func ToAuthRegisterResponse(user entity.User, wallet entity.Wallet) *AuthRegisterResponse {
