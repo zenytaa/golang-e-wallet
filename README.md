@@ -1,4 +1,4 @@
-# assignment-go-rest-api
+# golang e-wallet REST API
 
 ### Description
 E-Wallet RESTful API built with golang, postgreSQL, JWT authentication, and trying to implement clean architecture.
