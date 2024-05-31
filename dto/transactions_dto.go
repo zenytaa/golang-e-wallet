@@ -50,8 +50,8 @@ type TransactionListResponse struct {
 }
 
 type TransactionListResponses struct {
-	Pagination       PaginationResponse
-	TransactionsList []TransactionListResponse
+	Pagination       PaginationResponse        `json:"pagination_info"`
+	TransactionsList []TransactionListResponse `json:"transactions"`
 }
 
 func ToTopUpResponse(ts entity.Transaction) *TopUpResponse {

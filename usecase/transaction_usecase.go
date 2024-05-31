@@ -184,6 +184,8 @@ func (u *TransactionUsecaseImpl) TopUp(ctx context.Context, tc entity.Transactio
 		Amount:          tc.Amount,
 		SourceOfFund:    *sourceFund,
 		Description:     res.Description,
+		TransactionType: tc.TransactionType,
+		CreatedAt:       res.CreatedAt,
 	}
 
 	return &tcResponse, nil

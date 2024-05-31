@@ -16,8 +16,7 @@ $ cd assignment-go-rest-api/sql
 $ sudo -u postgres psql
 #run init.sql
 \i init.sql
-#seed the data
-\i mdl.sql
+
 ```
 
 ### Documentation
